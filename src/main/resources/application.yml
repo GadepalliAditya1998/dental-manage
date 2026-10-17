@@ -1,0 +1,50 @@
+spring:
+  application:
+    name: dental-clinic-manage
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/dental_clinic
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+    open-in-view: false
+
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.yaml
+
+# Retell AI Configuration
+retell:
+  api-key: ${RETELL_API_KEY:}
+  agent-id: ${RETELL_AGENT_ID:}
+  base-url: https://api.retellai.com
+
+# Twilio Configuration
+twilio:
+  account-sid: ${TWILIO_ACCOUNT_SID:}
+  auth-token: ${TWILIO_AUTH_TOKEN:}
+  phone-number: ${TWILIO_PHONE_NUMBER:}
+  whatsapp-number: ${TWILIO_WHATSAPP_NUMBER:}
+
+# Clinic Defaults
+clinic:
+  name: "Smile Dental Clinic"
+  timezone: "Asia/Kolkata"
+  reminder:
+    cron: "0 0 9 * * ?"
+    days-before: 1
+
+# Calendar Provider (none | google)
+calendar:
+  provider: none
+
+server:
+  port: 8080

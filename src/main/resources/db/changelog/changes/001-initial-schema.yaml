@@ -1,0 +1,803 @@
+databaseChangeLog:
+  # ── ClinicDetails ──────────────────────────────────────────────────────────────
+  - changeSet:
+      id: 001-create-clinic-details
+      author: system
+      changes:
+        - createTable:
+            tableName: clinic_details
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: clinic_name
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: clinic_phone
+                  type: VARCHAR(20)
+              - column:
+                  name: receptionist_phone
+                  type: VARCHAR(20)
+              - column:
+                  name: opening_time
+                  type: TIME
+              - column:
+                  name: closing_time
+                  type: TIME
+              - column:
+                  name: working_days
+                  type: VARCHAR(100)
+                  defaultValue: "MONDAY,TUESDAY,WEDNESDAY,THURSDAY,FRIDAY,SATURDAY"
+              - column:
+                  name: retell_agent_id
+                  type: VARCHAR(255)
+              - column:
+                  name: timezone
+                  type: VARCHAR(50)
+                  defaultValue: "Asia/Kolkata"
+              # Audit fields
+              - column:
+                  name: is_deleted
+                  type: BOOLEAN
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_on
+                  type: TIMESTAMP
+                  defaultValueComputed: "CURRENT_TIMESTAMP"
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_by
+                  type: VARCHAR(255)
+                  defaultValue: "SYSTEM"
+                  constraints:
+                    nullable: false
+              - column:
+                  name: modified_on
+                  type: TIMESTAMP
+                  defaultValueComputed: "CURRENT_TIMESTAMP"
+                  constraints:
+                    nullable: false
+              - column:
+                  name: modified_by
+                  type: VARCHAR(255)
+                  defaultValue: "SYSTEM"
+                  constraints:
+                    nullable: false
+
+  # ── Patients ───────────────────────────────────────────────────────────────────
+  - changeSet:
+      id: 001-create-patients
+      author: system
+      changes:
+        - createTable:
+            tableName: patients
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: first_name
+                  type: VARCHAR(100)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: last_name
+                  type: VARCHAR(100)
+              - column:
+                  name: email
+                  type: VARCHAR(255)
+              - column:
+                  name: phone_number
+                  type: VARCHAR(20)
+                  constraints:
+                    nullable: false
+                    unique: true
+              - column:
+                  name: is_new_lead
+                  type: BOOLEAN
+                  defaultValueBoolean: true
+              # Audit fields
+              - column:
+                  name: is_deleted
+                  type: BOOLEAN
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_on
+                  type: TIMESTAMP
+                  defaultValueComputed: "CURRENT_TIMESTAMP"
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_by
+                  type: VARCHAR(255)
+                  defaultValue: "SYSTEM"
+                  constraints:
+                    nullable: false
+              - column:
+                  name: modified_on
+                  type: TIMESTAMP
+                  defaultValueComputed: "CURRENT_TIMESTAMP"
+                  constraints:
+                    nullable: false
+              - column:
+                  name: modified_by
+                  type: VARCHAR(255)
+                  defaultValue: "SYSTEM"
+                  constraints:
+                    nullable: false
+        - createIndex:
+            tableName: patients
+            indexName: idx_patients_phone_number
+            columns:
+              - column:
+                  name: phone_number
+
+  # ── Doctors ────────────────────────────────────────────────────────────────────
+  - changeSet:
+      id: 001-create-doctors
+      author: system
+      changes:
+        - createTable:
+            tableName: doctors
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: first_name
+                  type: VARCHAR(100)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: last_name
+                  type: VARCHAR(100)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: specialization
+                  type: VARCHAR(255)
+              - column:
+                  name: email
+                  type: VARCHAR(255)
+              - column:
+                  name: phone_number
+                  type: VARCHAR(20)
+              - column:
+                  name: is_active
+                  type: BOOLEAN
+                  defaultValueBoolean: true
+              # Audit fields
+              - column:
+                  name: is_deleted
+                  type: BOOLEAN
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_on
+                  type: TIMESTAMP
+                  defaultValueComputed: "CURRENT_TIMESTAMP"
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_by
+                  type: VARCHAR(255)
+                  defaultValue: "SYSTEM"
+                  constraints:
+                    nullable: false
+              - column:
+                  name: modified_on
+                  type: TIMESTAMP
+                  defaultValueComputed: "CURRENT_TIMESTAMP"
+                  constraints:
+                    nullable: false
+              - column:
+                  name: modified_by
+                  type: VARCHAR(255)
+                  defaultValue: "SYSTEM"
+                  constraints:
+                    nullable: false
+
+  # ── Services ───────────────────────────────────────────────────────────────────
+  - changeSet:
+      id: 001-create-services
+      author: system
+      changes:
+        - createTable:
+            tableName: services
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: description
+                  type: TEXT
+              - column:
+                  name: duration_minutes
+                  type: INTEGER
+                  constraints:
+                    nullable: false
+              - column:
+                  name: price
+                  type: DECIMAL(10,2)
+              - column:
+                  name: is_active
+                  type: BOOLEAN
+                  defaultValueBoolean: true
+              # Audit fields
+              - column:
+                  name: is_deleted
+                  type: BOOLEAN
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_on
+                  type: TIMESTAMP
+                  defaultValueComputed: "CURRENT_TIMESTAMP"
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_by
+                  type: VARCHAR(255)
+                  defaultValue: "SYSTEM"
+                  constraints:
+                    nullable: false
+              - column:
+                  name: modified_on
+                  type: TIMESTAMP
+                  defaultValueComputed: "CURRENT_TIMESTAMP"
+                  constraints:
+                    nullable: false
+              - column:
+                  name: modified_by
+                  type: VARCHAR(255)
+                  defaultValue: "SYSTEM"
+                  constraints:
+                    nullable: false
+
+  # ── DoctorServices (Join Table) ────────────────────────────────────────────────
+  - changeSet:
+      id: 001-create-doctor-services
+      author: system
+      changes:
+        - createTable:
+            tableName: doctor_services
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: doctor_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: service_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              # Audit fields
+              - column:
+                  name: is_deleted
+                  type: BOOLEAN
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_on
+                  type: TIMESTAMP
+                  defaultValueComputed: "CURRENT_TIMESTAMP"
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_by
+                  type: VARCHAR(255)
+                  defaultValue: "SYSTEM"
+                  constraints:
+                    nullable: false
+              - column:
+                  name: modified_on
+                  type: TIMESTAMP
+                  defaultValueComputed: "CURRENT_TIMESTAMP"
+                  constraints:
+                    nullable: false
+              - column:
+                  name: modified_by
+                  type: VARCHAR(255)
+                  defaultValue: "SYSTEM"
+                  constraints:
+                    nullable: false
+        - addForeignKeyConstraint:
+            baseTableName: doctor_services
+            baseColumnNames: doctor_id
+            constraintName: fk_doctor_services_doctor
+            referencedTableName: doctors
+            referencedColumnNames: id
+        - addForeignKeyConstraint:
+            baseTableName: doctor_services
+            baseColumnNames: service_id
+            constraintName: fk_doctor_services_service
+            referencedTableName: services
+            referencedColumnNames: id
+        - addUniqueConstraint:
+            tableName: doctor_services
+            columnNames: doctor_id, service_id
+            constraintName: uk_doctor_service
+
+  # ── DoctorAvailabilities ───────────────────────────────────────────────────────
+  - changeSet:
+      id: 001-create-doctor-availabilities
+      author: system
+      changes:
+        - createTable:
+            tableName: doctor_availabilities
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: doctor_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: day_of_week
+                  type: VARCHAR(10)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: start_time
+                  type: TIME
+                  constraints:
+                    nullable: false
+              - column:
+                  name: end_time
+                  type: TIME
+                  constraints:
+                    nullable: false
+              - column:
+                  name: is_active
+                  type: BOOLEAN
+                  defaultValueBoolean: true
+              # Audit fields
+              - column:
+                  name: is_deleted
+                  type: BOOLEAN
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_on
+                  type: TIMESTAMP
+                  defaultValueComputed: "CURRENT_TIMESTAMP"
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_by
+                  type: VARCHAR(255)
+                  defaultValue: "SYSTEM"
+                  constraints:
+                    nullable: false
+              - column:
+                  name: modified_on
+                  type: TIMESTAMP
+                  defaultValueComputed: "CURRENT_TIMESTAMP"
+                  constraints:
+                    nullable: false
+              - column:
+                  name: modified_by
+                  type: VARCHAR(255)
+                  defaultValue: "SYSTEM"
+                  constraints:
+                    nullable: false
+        - addForeignKeyConstraint:
+            baseTableName: doctor_availabilities
+            baseColumnNames: doctor_id
+            constraintName: fk_doctor_availabilities_doctor
+            referencedTableName: doctors
+            referencedColumnNames: id
+
+  # ── CallRecords ────────────────────────────────────────────────────────────────
+  - changeSet:
+      id: 001-create-call-records
+      author: system
+      changes:
+        - createTable:
+            tableName: call_records
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: retell_call_id
+                  type: VARCHAR(255)
+                  constraints:
+                    unique: true
+              - column:
+                  name: patient_id
+                  type: BIGINT
+              - column:
+                  name: call_type
+                  type: VARCHAR(20)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: call_status
+                  type: VARCHAR(20)
+              - column:
+                  name: caller_phone
+                  type: VARCHAR(20)
+              - column:
+                  name: duration_ms
+                  type: INTEGER
+              - column:
+                  name: transcript
+                  type: TEXT
+              - column:
+                  name: transcript_object
+                  type: JSONB
+              - column:
+                  name: recording_url
+                  type: VARCHAR(500)
+              - column:
+                  name: sentiment
+                  type: VARCHAR(20)
+              - column:
+                  name: sentiment_score
+                  type: DECIMAL(5,2)
+              - column:
+                  name: call_summary
+                  type: TEXT
+              - column:
+                  name: transferred_to_human
+                  type: BOOLEAN
+                  defaultValueBoolean: false
+              - column:
+                  name: human_call_recording_url
+                  type: VARCHAR(500)
+              - column:
+                  name: human_call_transcript
+                  type: TEXT
+              - column:
+                  name: call_started_at
+                  type: TIMESTAMP
+              - column:
+                  name: call_ended_at
+                  type: TIMESTAMP
+              # Audit fields
+              - column:
+                  name: is_deleted
+                  type: BOOLEAN
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_on
+                  type: TIMESTAMP
+                  defaultValueComputed: "CURRENT_TIMESTAMP"
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_by
+                  type: VARCHAR(255)
+                  defaultValue: "SYSTEM"
+                  constraints:
+                    nullable: false
+              - column:
+                  name: modified_on
+                  type: TIMESTAMP
+                  defaultValueComputed: "CURRENT_TIMESTAMP"
+                  constraints:
+                    nullable: false
+              - column:
+                  name: modified_by
+                  type: VARCHAR(255)
+                  defaultValue: "SYSTEM"
+                  constraints:
+                    nullable: false
+        - addForeignKeyConstraint:
+            baseTableName: call_records
+            baseColumnNames: patient_id
+            constraintName: fk_call_records_patient
+            referencedTableName: patients
+            referencedColumnNames: id
+        - createIndex:
+            tableName: call_records
+            indexName: idx_call_records_retell_call_id
+            columns:
+              - column:
+                  name: retell_call_id
+        - createIndex:
+            tableName: call_records
+            indexName: idx_call_records_call_started_at
+            columns:
+              - column:
+                  name: call_started_at
+
+  # ── Appointments ───────────────────────────────────────────────────────────────
+  - changeSet:
+      id: 001-create-appointments
+      author: system
+      changes:
+        - createTable:
+            tableName: appointments
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: patient_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: doctor_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: service_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: call_record_id
+                  type: BIGINT
+              - column:
+                  name: appointment_start
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: appointment_end
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: status
+                  type: VARCHAR(20)
+                  defaultValue: "SCHEDULED"
+                  constraints:
+                    nullable: false
+              - column:
+                  name: calendar_event_added
+                  type: BOOLEAN
+                  defaultValueBoolean: false
+              - column:
+                  name: calendar_event_id
+                  type: VARCHAR(255)
+              - column:
+                  name: confirmation_status
+                  type: VARCHAR(20)
+                  defaultValue: "PENDING"
+              - column:
+                  name: reminder_sent_at
+                  type: TIMESTAMP
+              # Audit fields
+              - column:
+                  name: is_deleted
+                  type: BOOLEAN
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_on
+                  type: TIMESTAMP
+                  defaultValueComputed: "CURRENT_TIMESTAMP"
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_by
+                  type: VARCHAR(255)
+                  defaultValue: "SYSTEM"
+                  constraints:
+                    nullable: false
+              - column:
+                  name: modified_on
+                  type: TIMESTAMP
+                  defaultValueComputed: "CURRENT_TIMESTAMP"
+                  constraints:
+                    nullable: false
+              - column:
+                  name: modified_by
+                  type: VARCHAR(255)
+                  defaultValue: "SYSTEM"
+                  constraints:
+                    nullable: false
+        - addForeignKeyConstraint:
+            baseTableName: appointments
+            baseColumnNames: patient_id
+            constraintName: fk_appointments_patient
+            referencedTableName: patients
+            referencedColumnNames: id
+        - addForeignKeyConstraint:
+            baseTableName: appointments
+            baseColumnNames: doctor_id
+            constraintName: fk_appointments_doctor
+            referencedTableName: doctors
+            referencedColumnNames: id
+        - addForeignKeyConstraint:
+            baseTableName: appointments
+            baseColumnNames: service_id
+            constraintName: fk_appointments_service
+            referencedTableName: services
+            referencedColumnNames: id
+        - addForeignKeyConstraint:
+            baseTableName: appointments
+            baseColumnNames: call_record_id
+            constraintName: fk_appointments_call_record
+            referencedTableName: call_records
+            referencedColumnNames: id
+        - createIndex:
+            tableName: appointments
+            indexName: idx_appointments_doctor_start
+            columns:
+              - column:
+                  name: doctor_id
+              - column:
+                  name: appointment_start
+        - createIndex:
+            tableName: appointments
+            indexName: idx_appointments_status
+            columns:
+              - column:
+                  name: status
+
+  # ── CallMetrics ────────────────────────────────────────────────────────────────
+  - changeSet:
+      id: 001-create-call-metrics
+      author: system
+      changes:
+        - createTable:
+            tableName: call_metrics
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: metric_date
+                  type: DATE
+                  constraints:
+                    nullable: false
+                    unique: true
+              - column:
+                  name: total_ai_calls
+                  type: INTEGER
+                  defaultValueNumeric: 0
+              - column:
+                  name: total_human_transfers
+                  type: INTEGER
+                  defaultValueNumeric: 0
+              - column:
+                  name: successful_bookings
+                  type: INTEGER
+                  defaultValueNumeric: 0
+              - column:
+                  name: new_lead_bookings
+                  type: INTEGER
+                  defaultValueNumeric: 0
+              - column:
+                  name: cancelled_appointments
+                  type: INTEGER
+                  defaultValueNumeric: 0
+              - column:
+                  name: rescheduled_appointments
+                  type: INTEGER
+                  defaultValueNumeric: 0
+              - column:
+                  name: avg_call_duration_sec
+                  type: DECIMAL(10,2)
+              - column:
+                  name: avg_sentiment_score
+                  type: DECIMAL(5,2)
+              # Audit fields
+              - column:
+                  name: is_deleted
+                  type: BOOLEAN
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_on
+                  type: TIMESTAMP
+                  defaultValueComputed: "CURRENT_TIMESTAMP"
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_by
+                  type: VARCHAR(255)
+                  defaultValue: "SYSTEM"
+                  constraints:
+                    nullable: false
+              - column:
+                  name: modified_on
+                  type: TIMESTAMP
+                  defaultValueComputed: "CURRENT_TIMESTAMP"
+                  constraints:
+                    nullable: false
+              - column:
+                  name: modified_by
+                  type: VARCHAR(255)
+                  defaultValue: "SYSTEM"
+                  constraints:
+                    nullable: false
+
+  # ── Seed Data ──────────────────────────────────────────────────────────────────
+  - changeSet:
+      id: 001-seed-clinic-details
+      author: system
+      changes:
+        - insert:
+            tableName: clinic_details
+            columns:
+              - column:
+                  name: clinic_name
+                  value: "Smile Dental Clinic"
+              - column:
+                  name: clinic_phone
+                  value: "+1234567890"
+              - column:
+                  name: opening_time
+                  value: "09:00:00"
+              - column:
+                  name: closing_time
+                  value: "18:00:00"
+              - column:
+                  name: timezone
+                  value: "Asia/Kolkata"
+              - column:
+                  name: created_by
+                  value: "SYSTEM"
+              - column:
+                  name: modified_by
+                  value: "SYSTEM"
