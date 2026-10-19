@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Data
@@ -14,10 +15,12 @@ import java.time.LocalDateTime;
 public class PatientResponse {
 
     private Long id;
+    private Long clinicId;
     private String firstName;
     private String lastName;
     private String email;
     private String phoneNumber;
+    private LocalDate dateOfBirth;
     private Boolean isNewLead;
     private LocalDateTime createdOn;
     private LocalDateTime modifiedOn;

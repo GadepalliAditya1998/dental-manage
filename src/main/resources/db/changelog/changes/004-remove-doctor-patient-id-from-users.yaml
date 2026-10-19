@@ -1,0 +1,11 @@
+databaseChangeLog:
+  - changeSet:
+      id: 004-drop-doctor-patient-id-from-users
+      author: system
+      changes:
+        - dropColumn:
+            tableName: users
+            columnName: doctor_id
+        - dropColumn:
+            tableName: users
+            columnName: patient_id

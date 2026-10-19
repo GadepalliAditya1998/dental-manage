@@ -1,0 +1,102 @@
+<div class="container-fluid py-2">
+  <div class="mb-4">
+    <h2 class="fw-bold mb-1 text-dark">Clinic & Integration Settings</h2>
+    <p class="text-muted mb-0">Configure clinic hours, contact routing, and Retell AI voice agent parameters</p>
+  </div>
+
+  <div *ngIf="errorMsg" class="alert alert-danger border-0 shadow-sm mb-3">
+    <i class="bi bi-exclamation-triangle-fill me-2"></i> {{ errorMsg }}
+  </div>
+  <div *ngIf="successMsg" class="alert alert-success border-0 shadow-sm mb-3">
+    <i class="bi bi-check-circle-fill me-2"></i> {{ successMsg }}
+  </div>
+
+  <app-loading-spinner *ngIf="loading" message="Loading clinic settings..."></app-loading-spinner>
+
+  <div *ngIf="!loading" class="row">
+    <div class="col-12 col-lg-8">
+      <div class="card card-custom border-0 p-4 bg-white">
+        <form [formGroup]="settingsForm" (ngSubmit)="onSubmit()">
+          <!-- Clinic Details Section -->
+          <h5 class="fw-bold mb-3 text-dark border-bottom pb-2">
+            <i class="bi bi-hospital me-2 text-teal"></i> Clinic Identity
+          </h5>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold small">Clinic Name *</label>
+            <input type="text" class="form-control" formControlName="clinicName">
+          </div>
+
+          <div class="row g-3 mb-4">
+            <div class="col-sm-6">
+              <label class="form-label fw-semibold small">Clinic Main Phone *</label>
+              <input type="tel" class="form-control" formControlName="clinicPhone" placeholder="+1-555-DENTAL-1">
+            </div>
+            <div class="col-sm-6">
+              <label class="form-label fw-semibold small">Receptionist Transfer Phone</label>
+              <input type="tel" class="form-control" formControlName="receptionistPhone" placeholder="+1-555-RECEPT-1">
+              <div class="form-text small">Used for AI human transfer escalations.</div>
+            </div>
+          </div>
+
+          <!-- Operating Hours Section -->
+          <h5 class="fw-bold mb-3 text-dark border-bottom pb-2">
+            <i class="bi bi-clock-history me-2 text-teal"></i> Operating Hours & Schedule
+          </h5>
+
+          <div class="row g-3 mb-3">
+            <div class="col-sm-6">
+              <label class="form-label fw-semibold small">Clinic Opening Time *</label>
+              <input type="time" class="form-control" formControlName="openingTime">
+            </div>
+            <div class="col-sm-6">
+              <label class="form-label fw-semibold small">Clinic Closing Time *</label>
+              <input type="time" class="form-control" formControlName="closingTime">
+            </div>
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label fw-semibold small d-block">Open Days of the Week</label>
+            <div class="d-flex flex-wrap gap-2 pt-1">
+              <button type="button" *ngFor="let day of allDays"
+                      class="btn btn-sm"
+                      [ngClass]="selectedDays.includes(day) ? 'btn-teal' : 'btn-outline-secondary'"
+                      (click)="toggleDay(day)">
+                {{ day | titlecase }}
+              </button>
+            </div>
+          </div>
+
+          <!-- AI & Timezone Section -->
+          <h5 class="fw-bold mb-3 text-dark border-bottom pb-2">
+            <i class="bi bi-cpu me-2 text-teal"></i> AI & Regional Settings
+          </h5>
+
+          <div class="row g-3 mb-4">
+            <div class="col-sm-6">
+              <label class="form-label fw-semibold small">Retell AI Agent ID</label>
+              <input type="text" class="form-control font-monospace" formControlName="retellAgentId">
+              <div class="form-text small">Bound to inbound phone numbers.</div>
+            </div>
+            <div class="col-sm-6">
+              <label class="form-label fw-semibold small">Timezone *</label>
+              <select class="form-select" formControlName="timezone">
+                <option value="Asia/Kolkata">Asia/Kolkata (IST)</option>
+                <option value="America/New_York">America/New_York (EST)</option>
+                <option value="America/Los_Angeles">America/Los_Angeles (PST)</option>
+                <option value="Europe/London">Europe/London (GMT)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="d-flex justify-content-end gap-2">
+            <button type="submit" class="btn btn-primary bg-teal-gradient border-0 px-4 py-2" [disabled]="saving">
+              <span *ngIf="saving" class="spinner-border spinner-border-sm me-1"></span>
+              <i *ngIf="!saving" class="bi bi-save me-1"></i> Save Clinic Settings
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

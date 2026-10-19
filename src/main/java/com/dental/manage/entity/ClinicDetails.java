@@ -12,16 +12,21 @@ import lombok.Setter;
 import java.time.LocalTime;
 
 /**
- * Singleton clinic configuration entity.
+ * Clinic configuration entity supporting multi-tenant architecture.
  */
 @Entity
 @Table(name = "clinic_details")
 @Getter
 @Setter
-@NoArgsConstructor
 @AllArgsConstructor
 @Builder
 public class ClinicDetails extends BaseEntity {
+
+    public ClinicDetails() {
+    }
+
+    @Column(name = "clinic_id")
+    private Long clinicId;
 
     @Column(name = "clinic_name", nullable = false)
     private String clinicName;

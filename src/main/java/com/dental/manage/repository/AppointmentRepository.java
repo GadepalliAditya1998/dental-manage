@@ -69,4 +69,29 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
             @Param("status") AppointmentStatus status,
             @Param("start") LocalDateTime start,
             @Param("end") LocalDateTime end);
+
+    // Multi-tenant queries
+    List<Appointment> findByClinicIdAndIsDeletedFalse(Long clinicId);
+
+    Page<Appointment> findByClinicIdAndIsDeletedFalse(Long clinicId, Pageable pageable);
+
+    Optional<Appointment> findByIdAndClinicIdAndIsDeletedFalse(Long id, Long clinicId);
+
+    @Query("SELECT a FROM Appointment a WHERE a.clinicId = :clinicId " +
+           "AND a.doctor.id = :doctorId " +
+           "AND a.appointmentStart >= :start AND a.appointmentEnd <= :end " +
+           "AND a.status NOT IN ('CANCELLED') AND a.isDeleted = false")
+    List<Appointment> findByClinicIdAndDoctorIdAndDateRange(
+            @Param("clinicId") Long clinicId,
+            @Param("doctorId") Long doctorId,
+            @Param("start") LocalDateTime start,
+            @Param("end") LocalDateTime end);
+
+    @Query("SELECT a FROM Appointment a WHERE a.clinicId = :clinicId " +
+           "AND a.isDeleted = false AND a.appointmentStart BETWEEN :start AND :end")
+    Page<Appointment> findByClinicIdAndDateRange(
+            @Param("clinicId") Long clinicId,
+            @Param("start") LocalDateTime start,
+            @Param("end") LocalDateTime end,
+            Pageable pageable);
 }

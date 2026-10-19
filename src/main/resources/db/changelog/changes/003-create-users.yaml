@@ -1,0 +1,202 @@
+databaseChangeLog:
+  # ── Create users table for authentication ────────────────────────────────────
+  - changeSet:
+      id: 003-create-users-table
+      author: system
+      changes:
+        - createTable:
+            tableName: users
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: clinic_id
+                  type: BIGINT
+                  defaultValueNumeric: 1
+              - column:
+                  name: doctor_id
+                  type: BIGINT
+              - column:
+                  name: patient_id
+                  type: BIGINT
+              - column:
+                  name: username
+                  type: VARCHAR(100)
+                  constraints:
+                    nullable: false
+                    unique: true
+              - column:
+                  name: password
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: role
+                  type: VARCHAR(30)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: full_name
+                  type: VARCHAR(150)
+              - column:
+                  name: email
+                  type: VARCHAR(150)
+              - column:
+                  name: phone_number
+                  type: VARCHAR(30)
+              - column:
+                  name: is_active
+                  type: BOOLEAN
+                  defaultValueBoolean: true
+                  constraints:
+                    nullable: false
+              # Audit fields
+              - column:
+                  name: is_deleted
+                  type: BOOLEAN
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_on
+                  type: TIMESTAMP
+                  defaultValueComputed: "CURRENT_TIMESTAMP"
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_by
+                  type: VARCHAR(255)
+                  defaultValue: "SYSTEM"
+                  constraints:
+                    nullable: false
+              - column:
+                  name: modified_on
+                  type: TIMESTAMP
+                  defaultValueComputed: "CURRENT_TIMESTAMP"
+                  constraints:
+                    nullable: false
+              - column:
+                  name: modified_by
+                  type: VARCHAR(255)
+                  defaultValue: "SYSTEM"
+                  constraints:
+                    nullable: false
+
+  # ── Indexes on users table ───────────────────────────────────────────────────
+  - changeSet:
+      id: 003-create-users-indexes
+      author: system
+      changes:
+        - createIndex:
+            tableName: users
+            indexName: idx_users_username
+            columns:
+              - column:
+                  name: username
+        - createIndex:
+            tableName: users
+            indexName: idx_users_role
+            columns:
+              - column:
+                  name: role
+
+  # ── Seed Default Users ───────────────────────────────────────────────────────
+  - changeSet:
+      id: 003-seed-default-users
+      author: system
+      changes:
+        - insert:
+            tableName: users
+            columns:
+              - column:
+                  name: clinic_id
+                  valueNumeric: 1
+              - column:
+                  name: username
+                  value: "receptionist"
+              - column:
+                  name: password
+                  value: "reception123"
+              - column:
+                  name: role
+                  value: "RECEPTIONIST"
+              - column:
+                  name: full_name
+                  value: "Clinic Receptionist"
+              - column:
+                  name: is_active
+                  valueBoolean: true
+              - column:
+                  name: is_deleted
+                  valueBoolean: false
+              - column:
+                  name: created_by
+                  value: "SYSTEM"
+              - column:
+                  name: modified_by
+                  value: "SYSTEM"
+        - insert:
+            tableName: users
+            columns:
+              - column:
+                  name: clinic_id
+                  valueNumeric: 1
+              - column:
+                  name: username
+                  value: "doctor"
+              - column:
+                  name: password
+                  value: "doctor123"
+              - column:
+                  name: role
+                  value: "DOCTOR"
+              - column:
+                  name: full_name
+                  value: "Dr. Jane Smith"
+              - column:
+                  name: is_active
+                  valueBoolean: true
+              - column:
+                  name: is_deleted
+                  valueBoolean: false
+              - column:
+                  name: created_by
+                  value: "SYSTEM"
+              - column:
+                  name: modified_by
+                  value: "SYSTEM"
+        - insert:
+            tableName: users
+            columns:
+              - column:
+                  name: clinic_id
+                  valueNumeric: 1
+              - column:
+                  name: username
+                  value: "patient"
+              - column:
+                  name: password
+                  value: "patient123"
+              - column:
+                  name: role
+                  value: "PATIENT"
+              - column:
+                  name: full_name
+                  value: "John Doe"
+              - column:
+                  name: is_active
+                  valueBoolean: true
+              - column:
+                  name: is_deleted
+                  valueBoolean: false
+              - column:
+                  name: created_by
+                  value: "SYSTEM"
+              - column:
+                  name: modified_by
+                  value: "SYSTEM"

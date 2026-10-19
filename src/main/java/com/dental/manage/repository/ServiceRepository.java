@@ -19,4 +19,15 @@ public interface ServiceRepository extends JpaRepository<Service, Long> {
     Page<Service> findByIsDeletedFalse(Pageable pageable);
 
     List<Service> findByNameContainingIgnoreCaseAndIsActiveTrueAndIsDeletedFalse(String name);
+
+    // Multi-tenant queries
+    List<Service> findByClinicIdAndIsActiveTrueAndIsDeletedFalse(Long clinicId);
+
+    List<Service> findByClinicIdAndIsDeletedFalse(Long clinicId);
+
+    Optional<Service> findByIdAndClinicIdAndIsDeletedFalse(Long id, Long clinicId);
+
+    Page<Service> findByClinicIdAndIsDeletedFalse(Long clinicId, Pageable pageable);
+
+    List<Service> findByClinicIdAndNameContainingIgnoreCaseAndIsActiveTrueAndIsDeletedFalse(Long clinicId, String name);
 }

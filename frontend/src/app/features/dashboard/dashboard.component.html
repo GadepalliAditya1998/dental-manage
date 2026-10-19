@@ -1,0 +1,279 @@
+<div class="container-fluid py-2">
+  <!-- Top Header with Role-Specific Greetings -->
+  <div class="d-flex flex-wrap align-items-center justify-content-between mb-4">
+    <div>
+      <div class="d-flex align-items-center gap-2 mb-1">
+        <h2 class="fw-bold mb-0 text-dark">
+          {{ isDoctor ? ('Welcome, Dr. ' + (contextUser?.name || 'Practitioner')) : 'Clinic Desk Operations' }}
+        </h2>
+        <span class="badge" [ngClass]="isDoctor ? 'bg-primary-subtle text-primary' : 'bg-teal-subtle text-teal border border-teal'">
+          {{ contextUser?.role || 'Staff' }}
+        </span>
+      </div>
+      <p class="text-muted mb-0">
+        {{ isDoctor ? 'Here is your clinical appointment schedule and patient consultations for today.' : 'Real-time clinic performance, Retell AI calls, and appointment tracking.' }}
+      </p>
+    </div>
+    <div class="d-flex gap-2 mt-2 mt-sm-0">
+      <button class="btn btn-outline-secondary btn-sm" (click)="loadDashboardData()">
+        <i class="bi bi-arrow-clockwise me-1"></i> Refresh
+      </button>
+      <a routerLink="/appointments/new" class="btn btn-primary btn-sm bg-teal-gradient border-0">
+        <i class="bi bi-calendar-plus me-1"></i> New Appointment
+      </a>
+    </div>
+  </div>
+
+  <!-- Pending Backend Alert (if API error occurs) -->
+  <div *ngIf="errorMessage" class="alert alert-info alert-dismissible fade show border-0 shadow-sm" role="alert">
+    <div class="d-flex align-items-center">
+      <i class="bi bi-info-circle-fill fs-4 me-3 text-primary"></i>
+      <div>
+        <h6 class="fw-bold mb-1">Backend REST API Integration Ready</h6>
+        <p class="mb-0 small">
+          Frontend is listening to <code>http://localhost:8080/api/dashboard/metrics</code> and WebSocket <code>/ws</code>.
+          Once backend controllers are online, real-time statistics will display here automatically.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <app-loading-spinner *ngIf="loading" message="Loading clinic metrics..."></app-loading-spinner>
+
+  <ng-container *ngIf="!loading">
+    <!-- Doctor View KPIs -->
+    <div class="row g-3 mb-4" *ngIf="isDoctor">
+      <div class="col-12 col-sm-6 col-xl-3">
+        <app-stat-card
+          title="Today's Appointments"
+          [value]="recentAppointments.length"
+          subtitle="Consultations today"
+          icon="bi-calendar-check"
+          iconColor="#0d9488"
+          iconBgColor="#ccfbf1">
+        </app-stat-card>
+      </div>
+      <div class="col-12 col-sm-6 col-xl-3">
+        <app-stat-card
+          title="Confirmed"
+          [value]="metrics?.successfulBookings ?? 0"
+          subtitle="Patients confirmed"
+          icon="bi-check2-circle"
+          iconColor="#16a34a"
+          iconBgColor="#dcfce7">
+        </app-stat-card>
+      </div>
+      <div class="col-12 col-sm-6 col-xl-3">
+        <app-stat-card
+          title="New Patients"
+          [value]="metrics?.newLeadBookings ?? 0"
+          subtitle="First-time visits"
+          icon="bi-person-plus-fill"
+          iconColor="#2563eb"
+          iconBgColor="#dbeafe">
+        </app-stat-card>
+      </div>
+      <div class="col-12 col-sm-6 col-xl-3">
+        <app-stat-card
+          title="Cancellations"
+          [value]="metrics?.cancelledAppointments ?? 0"
+          subtitle="Cancelled / Rescheduled"
+          icon="bi-calendar-x"
+          iconColor="#dc2626"
+          iconBgColor="#fee2e2">
+        </app-stat-card>
+      </div>
+    </div>
+
+    <!-- Receptionist View KPIs -->
+    <div class="row g-3 mb-4" *ngIf="!isDoctor">
+      <div class="col-12 col-sm-6 col-xl-3">
+        <app-stat-card
+          title="Total AI Calls"
+          [value]="metrics?.totalAiCalls ?? 0"
+          subtitle="Inbound AI conversations"
+          icon="bi-robot"
+          iconColor="#0d9488"
+          iconBgColor="#ccfbf1">
+        </app-stat-card>
+      </div>
+      <div class="col-12 col-sm-6 col-xl-3">
+        <app-stat-card
+          title="Successful Bookings"
+          [value]="metrics?.successfulBookings ?? 0"
+          subtitle="AI & Reception bookings"
+          icon="bi-calendar-check"
+          iconColor="#16a34a"
+          iconBgColor="#dcfce7">
+        </app-stat-card>
+      </div>
+      <div class="col-12 col-sm-6 col-xl-3">
+        <app-stat-card
+          title="Human Transfers"
+          [value]="metrics?.totalHumanTransfers ?? 0"
+          subtitle="Forwarded to receptionist"
+          icon="bi-headset"
+          iconColor="#ea580c"
+          iconBgColor="#ffedd5">
+        </app-stat-card>
+      </div>
+      <div class="col-12 col-sm-6 col-xl-3">
+        <app-stat-card
+          title="New Lead Bookings"
+          [value]="metrics?.newLeadBookings ?? 0"
+          subtitle="First-time patients"
+          icon="bi-person-plus-fill"
+          iconColor="#2563eb"
+          iconBgColor="#dbeafe">
+        </app-stat-card>
+      </div>
+    </div>
+
+    <!-- Tables Layout: Role-adapted -->
+    <div class="row g-4">
+      <!-- Appointments List (Full width for Doctor, 7-col for Receptionist) -->
+      <div [ngClass]="isDoctor ? 'col-12' : 'col-12 col-lg-7'">
+        <div class="card card-custom border-0 h-100">
+          <div class="card-header bg-white border-0 py-3 d-flex align-items-center justify-content-between">
+            <h5 class="fw-bold mb-0 text-dark">
+              <i class="bi bi-calendar2-week me-2 text-teal"></i>
+              {{ isDoctor ? 'My Patients Scheduled for Today' : "Today's Clinic Appointments" }}
+            </h5>
+            <a routerLink="/appointments" class="btn btn-sm btn-link text-decoration-none text-teal fw-semibold">
+              View All <i class="bi bi-arrow-right"></i>
+            </a>
+          </div>
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                  <tr>
+                    <th class="ps-3">Patient</th>
+                    <th *ngIf="!isDoctor">Doctor</th>
+                    <th>Treatment / Service</th>
+                    <th>Time Slot</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let appt of recentAppointments">
+                    <td class="ps-3 fw-semibold text-dark">
+                      {{ appt.patient.firstName }} {{ appt.patient.lastName }}
+                      <span *ngIf="appt.patient.isNewLead" class="badge bg-primary-subtle text-primary ms-1 extra-small">New</span>
+                    </td>
+                    <td *ngIf="!isDoctor">Dr. {{ appt.doctor.lastName }}</td>
+                    <td>
+                      <span class="badge bg-light text-dark border">{{ appt.service.name }}</span>
+                    </td>
+                    <td class="small text-muted">{{ appt.appointmentStart | date:'shortTime' }} - {{ appt.appointmentEnd | date:'shortTime' }}</td>
+                    <td>
+                      <span [ngClass]="(appt.status | statusBadge).cssClass">
+                        {{ (appt.status | statusBadge).text }}
+                      </span>
+                    </td>
+                  </tr>
+                  <tr *ngIf="recentAppointments.length === 0">
+                    <td [attr.colspan]="isDoctor ? 4 : 5" class="text-center py-4 text-muted">
+                      No appointments scheduled for today.
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Receptionist Only: Recent AI Calls -->
+      <div class="col-12 col-lg-5" *ngIf="!isDoctor">
+        <div class="card card-custom border-0 h-100">
+          <div class="card-header bg-white border-0 py-3 d-flex align-items-center justify-content-between">
+            <h5 class="fw-bold mb-0 text-dark">
+              <i class="bi bi-telephone me-2 text-primary"></i> Inbound AI Call Logs
+            </h5>
+            <a routerLink="/calls" class="btn btn-sm btn-link text-decoration-none text-teal fw-semibold">
+              View All <i class="bi bi-arrow-right"></i>
+            </a>
+          </div>
+          <div class="card-body p-0">
+            <div class="list-group list-group-flush">
+              <div *ngFor="let call of recentCalls"
+                   (click)="viewCallDetails(call)"
+                   class="list-group-item list-group-item-action p-3 cursor-pointer">
+                <div class="d-flex w-100 justify-content-between align-items-center mb-1">
+                  <h6 class="mb-0 fw-semibold">
+                    <i class="bi bi-telephone-inbound me-1" [ngClass]="call.transferredToHuman ? 'text-danger' : 'text-primary'"></i>
+                    {{ call.callerPhone || 'Unknown Caller' }}
+                  </h6>
+                  <small class="text-muted">{{ call.durationMs | duration }}</small>
+                </div>
+                <p class="mb-1 small text-secondary text-truncate" style="max-width: 320px;">
+                  {{ call.callSummary || 'No summary available' }}
+                </p>
+                <div class="d-flex gap-2 align-items-center mt-2">
+                  <span [ngClass]="(call.callType | statusBadge).cssClass" class="small">
+                    {{ (call.callType | statusBadge).text }}
+                  </span>
+                  <span *ngIf="call.sentiment" class="badge bg-light text-dark border">
+                    {{ call.sentiment }}
+                  </span>
+                </div>
+              </div>
+              <div *ngIf="recentCalls.length === 0" class="text-center py-4 text-muted">
+                No recent calls recorded.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+
+  <!-- Call Details Modal (for Receptionist) -->
+  <div class="modal fade show d-block" *ngIf="selectedCall" tabindex="-1" style="background: rgba(0,0,0,0.5);">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content border-0 shadow">
+        <div class="modal-header bg-teal-gradient text-white">
+          <h5 class="modal-title fw-bold">
+            <i class="bi bi-telephone-outbound me-2"></i> Call Details & Transcript
+          </h5>
+          <button type="button" class="btn-close btn-close-white" (click)="closeModal()"></button>
+        </div>
+        <div class="modal-body p-4">
+          <div class="row g-3 mb-3">
+            <div class="col-sm-6">
+              <label class="text-muted small">Caller Phone</label>
+              <div class="fw-bold">{{ selectedCall.callerPhone }}</div>
+            </div>
+            <div class="col-sm-6">
+              <label class="text-muted small">Call Duration</label>
+              <div class="fw-bold">{{ selectedCall.durationMs | duration }}</div>
+            </div>
+          </div>
+
+          <div class="mb-3" *ngIf="selectedCall.callSummary">
+            <label class="text-muted small fw-semibold">Summary</label>
+            <div class="p-3 bg-light rounded border text-dark">{{ selectedCall.callSummary }}</div>
+          </div>
+
+          <div class="mb-3" *ngIf="selectedCall.transcript">
+            <label class="text-muted small fw-semibold">Transcript</label>
+            <div class="p-3 bg-light rounded border text-secondary" style="max-height: 250px; overflow-y: auto; white-space: pre-wrap;">{{ selectedCall.transcript }}</div>
+          </div>
+
+          <div *ngIf="selectedCall.recordingUrl" class="mb-2">
+            <label class="text-muted small fw-semibold">Audio Recording</label>
+            <div>
+              <audio controls class="w-100 mt-1">
+                <source [src]="selectedCall.recordingUrl" type="audio/mpeg">
+              </audio>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary btn-sm" (click)="closeModal()">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -13,6 +13,7 @@ import java.time.LocalTime;
 @Builder
 public class ClinicSettingsRequest {
 
+    private Long clinicId;
     private String clinicName;
     private String clinicPhone;
     private String receptionistPhone;

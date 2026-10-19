@@ -1,0 +1,99 @@
+<div class="container-fluid py-2">
+  <div class="d-flex flex-wrap align-items-center justify-content-between mb-4">
+    <div>
+      <h2 class="fw-bold mb-1 text-dark">Patients Directory</h2>
+      <p class="text-muted mb-0">Manage registered clinic patients and AI-captured inbound leads</p>
+    </div>
+    <div>
+      <a routerLink="/patients/new" class="btn btn-primary bg-teal-gradient border-0">
+        <i class="bi bi-person-plus me-1"></i> Add New Patient
+      </a>
+    </div>
+  </div>
+
+  <!-- Search & Filters -->
+  <div class="card card-custom p-3 border-0 mb-4">
+    <div class="row g-3 align-items-center">
+      <div class="col-12 col-md-6">
+        <div class="input-group">
+          <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
+          <input type="text" class="form-control border-start-0" placeholder="Search by name, phone number, or email..."
+                 [(ngModel)]="searchQuery" (input)="applyFilter()">
+        </div>
+      </div>
+      <div class="col-12 col-md-4">
+        <div class="btn-group w-100" role="group">
+          <button type="button" class="btn btn-outline-secondary" [class.active]="leadFilter === 'ALL'" (click)="leadFilter = 'ALL'; applyFilter()">All Patients</button>
+          <button type="button" class="btn btn-outline-secondary" [class.active]="leadFilter === 'NEW'" (click)="leadFilter = 'NEW'; applyFilter()">New Leads Only</button>
+          <button type="button" class="btn btn-outline-secondary" [class.active]="leadFilter === 'EXISTING'" (click)="leadFilter = 'EXISTING'; applyFilter()">Existing</button>
+        </div>
+      </div>
+      <div class="col-12 col-md-2 text-md-end">
+        <button class="btn btn-outline-secondary w-100" (click)="loadPatients()">
+          <i class="bi bi-arrow-clockwise me-1"></i> Refresh
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <app-loading-spinner *ngIf="loading" message="Loading patients directory..."></app-loading-spinner>
+
+  <div *ngIf="errorMessage" class="alert alert-info border-0 shadow-sm">
+    <i class="bi bi-info-circle me-2"></i> {{ errorMessage }}
+  </div>
+
+  <!-- Patients Table -->
+  <div *ngIf="!loading" class="card card-custom border-0">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th class="ps-3">ID</th>
+            <th>Patient Name</th>
+            <th>Phone</th>
+            <th>Email</th>
+            <th>Type</th>
+            <th>Registered On</th>
+            <th class="text-end pe-3">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let p of filteredPatients">
+            <td class="ps-3 text-muted">#{{ p.id }}</td>
+            <td class="fw-semibold text-dark">
+              <i class="bi bi-person-circle text-teal me-2 fs-5 align-middle"></i>
+              {{ p.firstName }} {{ p.lastName }}
+            </td>
+            <td>
+              <a [href]="'tel:' + p.phoneNumber" class="text-decoration-none text-dark">
+                <i class="bi bi-telephone me-1 text-muted"></i>{{ p.phoneNumber }}
+              </a>
+            </td>
+            <td>{{ p.email || '—' }}</td>
+            <td>
+              <span *ngIf="p.isNewLead" class="badge bg-primary-subtle text-primary">New Lead (AI)</span>
+              <span *ngIf="!p.isNewLead" class="badge bg-light text-muted border">Registered</span>
+            </td>
+            <td class="small text-muted">{{ (p.createdOn | date:'mediumDate') || '—' }}</td>
+            <td class="text-end pe-3">
+              <div class="btn-group btn-group-sm">
+                <a [routerLink]="['/patients', p.id, 'edit']" class="btn btn-outline-secondary" title="Edit Patient">
+                  <i class="bi bi-pencil"></i>
+                </a>
+                <button class="btn btn-outline-danger" (click)="deletePatient(p.id)" title="Delete Patient">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+          <tr *ngIf="filteredPatients.length === 0">
+            <td colspan="7" class="text-center py-5 text-muted">
+              <i class="bi bi-people fs-1 d-block mb-2 text-secondary"></i>
+              No patients matched your search criteria.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

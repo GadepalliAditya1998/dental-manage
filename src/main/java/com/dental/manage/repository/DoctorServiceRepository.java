@@ -14,4 +14,11 @@ public interface DoctorServiceRepository extends JpaRepository<DoctorService, Lo
     List<DoctorService> findByServiceIdAndIsDeletedFalse(Long serviceId);
 
     void deleteByDoctorId(Long doctorId);
+
+    // Multi-tenant queries
+    List<DoctorService> findByClinicIdAndDoctorIdAndIsDeletedFalse(Long clinicId, Long doctorId);
+
+    List<DoctorService> findByClinicIdAndServiceIdAndIsDeletedFalse(Long clinicId, Long serviceId);
+
+    void deleteByClinicIdAndDoctorId(Long clinicId, Long doctorId);
 }

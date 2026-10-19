@@ -10,6 +10,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,6 +26,9 @@ import java.util.List;
 @Builder
 public class Patient extends BaseEntity {
 
+    @Column(name = "clinic_id")
+    private Long clinicId;
+
     @Column(name = "first_name", nullable = false, length = 100)
     private String firstName;
 
@@ -36,6 +40,9 @@ public class Patient extends BaseEntity {
 
     @Column(name = "phone_number", nullable = false, unique = true, length = 20)
     private String phoneNumber;
+
+    @Column(name = "date_of_birth")
+    private LocalDate dateOfBirth;
 
     @Column(name = "is_new_lead")
     @Builder.Default

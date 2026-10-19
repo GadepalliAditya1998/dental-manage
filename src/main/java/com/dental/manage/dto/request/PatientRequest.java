@@ -7,11 +7,15 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 public class PatientRequest {
+
+    private Long clinicId;
 
     @NotBlank(message = "First name is required")
     private String firstName;
@@ -23,4 +27,6 @@ public class PatientRequest {
 
     @NotBlank(message = "Phone number is required")
     private String phoneNumber;
+
+    private LocalDate dateOfBirth;
 }

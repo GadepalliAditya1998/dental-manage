@@ -1,3 +1,11 @@
 databaseChangeLog:
   - include:
       file: db/changelog/changes/001-initial-schema.yaml
+  - include:
+      file: db/changelog/changes/002-add-clinic-id.yaml
+  - include:
+      file: db/changelog/changes/003-create-users.yaml
+  - include:
+      file: db/changelog/changes/004-remove-doctor-patient-id-from-users.yaml
+  - include:
+      file: db/changelog/changes/005-add-date-of-birth.yaml

@@ -14,6 +14,7 @@ import java.math.BigDecimal;
 public class ServiceResponse {
 
     private Long id;
+    private Long clinicId;
     private String name;
     private String description;
     private Integer durationMinutes;

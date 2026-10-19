@@ -17,4 +17,9 @@ public interface DoctorAvailabilityRepository extends JpaRepository<DoctorAvaila
     List<DoctorAvailability> findByDoctorIdAndIsDeletedFalse(Long doctorId);
 
     void deleteByDoctorId(Long doctorId);
+
+    // Multi-tenant queries
+    List<DoctorAvailability> findByClinicIdAndDoctorIdAndIsActiveTrueAndIsDeletedFalse(Long clinicId, Long doctorId);
+
+    List<DoctorAvailability> findByClinicIdAndIsActiveTrueAndIsDeletedFalse(Long clinicId);
 }

@@ -1,0 +1,77 @@
+<div class="login-page d-flex align-items-center justify-content-center min-vh-100 p-3">
+  <div class="card card-custom login-card border-0 shadow-lg p-4 p-sm-5 bg-white">
+    <!-- Clinic Brand Header -->
+    <div class="text-center mb-4">
+      <div class="brand-icon mx-auto mb-3 rounded-circle bg-teal-gradient d-flex align-items-center justify-content-center text-white shadow-sm">
+        <i class="bi bi-heart-pulse-fill fs-2"></i>
+      </div>
+      <h3 class="fw-bold text-dark mb-1">Smile Dental Clinic</h3>
+      <p class="text-muted small mb-0">Clinic Portal Sign In</p>
+    </div>
+
+    <!-- Relogin Reason Alert (when redirected from 403 / expired token) -->
+    <div *ngIf="reloginMessage" class="alert alert-warning border-0 shadow-sm small py-2 mb-3 d-flex align-items-center" role="alert">
+      <i class="bi bi-exclamation-triangle-fill fs-5 me-2 text-warning"></i>
+      <div>{{ reloginMessage }}</div>
+    </div>
+
+    <!-- Error / Access Denied Alert -->
+    <div *ngIf="errorMessage" class="alert alert-danger border-0 shadow-sm small py-2 mb-3 d-flex align-items-center" role="alert">
+      <i class="bi bi-shield-lock-fill fs-5 me-2 text-danger"></i>
+      <div>{{ errorMessage }}</div>
+    </div>
+
+    <!-- Unified Login Form -->
+    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+      <!-- Username or Email -->
+      <div class="mb-3">
+        <label class="form-label small fw-semibold">Username or Email *</label>
+        <div class="input-group">
+          <span class="input-group-text bg-light border-end-0">
+            <i class="bi bi-person text-muted"></i>
+          </span>
+          <input type="text" class="form-control border-start-0 ps-0" formControlName="username"
+                 placeholder="Enter your username or email"
+                 [class.is-invalid]="loginForm.get('username')?.touched && loginForm.get('username')?.invalid">
+        </div>
+        <div *ngIf="loginForm.get('username')?.touched && loginForm.get('username')?.invalid" class="text-danger small mt-1">
+          Username or email is required.
+        </div>
+      </div>
+
+      <!-- Password -->
+      <div class="mb-4">
+        <label class="form-label small fw-semibold">Password *</label>
+        <div class="input-group">
+          <span class="input-group-text bg-light border-end-0">
+            <i class="bi bi-lock text-muted"></i>
+          </span>
+          <input [type]="showPassword ? 'text' : 'password'" class="form-control border-start-0 border-end-0 px-0"
+                 formControlName="password" placeholder="Enter your password"
+                 [class.is-invalid]="loginForm.get('password')?.touched && loginForm.get('password')?.invalid">
+          <button type="button" class="input-group-text bg-light border-start-0 cursor-pointer"
+                  (click)="togglePasswordVisibility()">
+            <i class="bi" [ngClass]="showPassword ? 'bi-eye-slash text-muted' : 'bi-eye text-muted'"></i>
+          </button>
+        </div>
+        <div *ngIf="loginForm.get('password')?.touched && loginForm.get('password')?.invalid" class="text-danger small mt-1">
+          Password is required.
+        </div>
+      </div>
+
+      <!-- Submit Button -->
+      <button type="submit" class="btn btn-primary bg-teal-gradient border-0 w-100 py-2 fw-semibold shadow-sm mb-3"
+              [disabled]="loading">
+        <span *ngIf="loading" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+        <i *ngIf="!loading" class="bi bi-box-arrow-in-right me-2"></i>
+        {{ loading ? 'Authenticating...' : 'Sign In' }}
+      </button>
+
+      <div class="text-center pt-2">
+        <span class="text-muted extra-small">
+          Access is restricted to authorized dental clinic personnel.
+        </span>
+      </div>
+    </form>
+  </div>
+</div>

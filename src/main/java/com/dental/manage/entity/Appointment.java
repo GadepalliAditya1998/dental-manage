@@ -30,6 +30,9 @@ import java.time.LocalDateTime;
 @Builder
 public class Appointment extends BaseEntity {
 
+    @Column(name = "clinic_id")
+    private Long clinicId;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "patient_id", nullable = false)
     private Patient patient;

@@ -15,6 +15,8 @@ import java.time.LocalTime;
 @Builder
 public class DoctorAvailabilityRequest {
 
+    private Long clinicId;
+
     @NotBlank(message = "Day of week is required")
     private String dayOfWeek;
 

@@ -14,6 +14,7 @@ import java.time.LocalDateTime;
 public class DoctorResponse {
 
     private Long id;
+    private Long clinicId;
     private String firstName;
     private String lastName;
     private String specialization;

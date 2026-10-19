@@ -26,6 +26,9 @@ import java.time.LocalTime;
 @Builder
 public class DoctorAvailability extends BaseEntity {
 
+    @Column(name = "clinic_id")
+    private Long clinicId;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "doctor_id", nullable = false)
     private Doctor doctor;

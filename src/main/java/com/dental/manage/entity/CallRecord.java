@@ -31,6 +31,9 @@ import java.time.LocalDateTime;
 @Builder
 public class CallRecord extends BaseEntity {
 
+    @Column(name = "clinic_id")
+    private Long clinicId;
+
     @Column(name = "retell_call_id", unique = true)
     private String retellCallId;
 

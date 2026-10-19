@@ -1,0 +1,176 @@
+<div class="container-fluid py-2">
+  <div class="d-flex flex-wrap align-items-center justify-content-between mb-4">
+    <div>
+      <h2 class="fw-bold mb-1 text-dark">AI Voice Agent & Call Logs</h2>
+      <p class="text-muted mb-0">Retell AI inbound conversations, sentiment scores, and human receptionist transfers</p>
+    </div>
+    <div>
+      <button class="btn btn-outline-secondary btn-sm" (click)="loadCalls()">
+        <i class="bi bi-arrow-clockwise me-1"></i> Refresh Logs
+      </button>
+    </div>
+  </div>
+
+  <!-- Search & Filters -->
+  <div class="card card-custom p-3 border-0 mb-4">
+    <div class="row g-3 align-items-center">
+      <div class="col-12 col-md-6">
+        <div class="input-group">
+          <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
+          <input type="text" class="form-control border-start-0" placeholder="Search phone, summary, or call ID..."
+                 [(ngModel)]="searchQuery" (input)="applyFilter()">
+        </div>
+      </div>
+      <div class="col-12 col-md-4">
+        <select class="form-select" [(ngModel)]="filterType" (change)="applyFilter()">
+          <option value="">All Call Types</option>
+          <option value="AI_INBOUND">AI Inbound Only</option>
+          <option value="HUMAN_TRANSFER">Transferred to Receptionist</option>
+        </select>
+      </div>
+      <div class="col-12 col-md-2 text-md-end">
+        <button class="btn btn-outline-secondary w-100" (click)="filterType = ''; searchQuery = ''; applyFilter()">
+          <i class="bi bi-x-circle me-1"></i> Reset
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <app-loading-spinner *ngIf="loading" message="Loading call records..."></app-loading-spinner>
+
+  <div *ngIf="errorMessage" class="alert alert-info border-0 shadow-sm">
+    <i class="bi bi-info-circle me-2"></i> {{ errorMessage }}
+  </div>
+
+  <!-- Calls Table -->
+  <div *ngIf="!loading" class="card card-custom border-0">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th class="ps-3">Caller</th>
+            <th>Type</th>
+            <th>Started At</th>
+            <th>Duration</th>
+            <th>Sentiment</th>
+            <th>Summary</th>
+            <th class="text-end pe-3">Transcript</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let call of filteredCalls" (click)="openCallModal(call)" class="cursor-pointer">
+            <td class="ps-3 fw-bold text-dark">
+              <i class="bi bi-telephone-inbound me-2 text-teal"></i>
+              {{ call.callerPhone || 'Anonymous' }}
+            </td>
+            <td>
+              <span [ngClass]="(call.callType | statusBadge).cssClass">
+                {{ (call.callType | statusBadge).text }}
+              </span>
+            </td>
+            <td class="small text-muted">{{ call.callStartedAt ? (call.callStartedAt | date:'medium') : (call.createdOn | date:'medium') }}</td>
+            <td>
+              <span class="badge bg-light text-dark border">
+                <i class="bi bi-stopwatch me-1 text-muted"></i>{{ call.durationMs | duration }}
+              </span>
+            </td>
+            <td>
+              <span class="badge"
+                    [ngClass]="call.sentiment === 'Positive' ? 'bg-success-subtle text-success' : (call.sentiment === 'Negative' ? 'bg-danger-subtle text-danger' : 'bg-secondary-subtle text-muted')">
+                {{ call.sentiment || 'Neutral' }}
+                <span *ngIf="call.sentimentScore">({{ (call.sentimentScore * 100 | number:'1.0-0') }}%)</span>
+              </span>
+            </td>
+            <td class="small text-muted text-truncate" style="max-width: 300px;">
+              {{ call.callSummary || 'No summary available' }}
+            </td>
+            <td class="text-end pe-3">
+              <button class="btn btn-outline-teal btn-sm" (click)="$event.stopPropagation(); openCallModal(call)">
+                <i class="bi bi-file-text me-1"></i> View
+              </button>
+            </td>
+          </tr>
+          <tr *ngIf="filteredCalls.length === 0">
+            <td colspan="7" class="text-center py-5 text-muted">
+              <i class="bi bi-telephone-x fs-1 d-block mb-2 text-secondary"></i>
+              No call logs found matching current filter.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Call Modal Details -->
+  <div class="modal fade show d-block" *ngIf="selectedCall" tabindex="-1" style="background: rgba(0,0,0,0.5);">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content border-0 shadow">
+        <div class="modal-header bg-teal-gradient text-white">
+          <h5 class="modal-title fw-bold">
+            <i class="bi bi-telephone-inbound me-2"></i> Call Log & Audio Transcript
+          </h5>
+          <button type="button" class="btn-close btn-close-white" (click)="closeModal()"></button>
+        </div>
+        <div class="modal-body p-4">
+          <div class="row g-3 mb-3">
+            <div class="col-sm-4">
+              <label class="text-muted small">Caller</label>
+              <div class="fw-bold">{{ selectedCall.callerPhone || 'Anonymous' }}</div>
+            </div>
+            <div class="col-sm-4">
+              <label class="text-muted small">Duration</label>
+              <div class="fw-bold">{{ selectedCall.durationMs | duration }}</div>
+            </div>
+            <div class="col-sm-4">
+              <label class="text-muted small">Call Handling</label>
+              <div>
+                <span [ngClass]="(selectedCall.callType | statusBadge).cssClass">
+                  {{ (selectedCall.callType | statusBadge).text }}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div class="row g-3 mb-3">
+            <div class="col-sm-6" *ngIf="selectedCall.retellCallId">
+              <label class="text-muted small">Retell Call ID</label>
+              <div class="font-monospace small text-dark">{{ selectedCall.retellCallId }}</div>
+            </div>
+            <div class="col-sm-6">
+              <label class="text-muted small">Sentiment Analysis</label>
+              <div class="fw-bold text-success">{{ selectedCall.sentiment || 'Neutral' }} ({{ selectedCall.sentimentScore ? (selectedCall.sentimentScore * 100 | number:'1.0-0') + '%' : 'N/A' }})</div>
+            </div>
+          </div>
+
+          <div class="mb-3" *ngIf="selectedCall.callSummary">
+            <label class="text-muted small fw-semibold">AI Call Summary</label>
+            <div class="p-3 bg-light rounded border text-dark">{{ selectedCall.callSummary }}</div>
+          </div>
+
+          <div class="mb-3" *ngIf="selectedCall.transcript">
+            <label class="text-muted small fw-semibold">Retell AI Conversation Transcript</label>
+            <div class="p-3 bg-light rounded border text-secondary" style="max-height: 250px; overflow-y: auto; white-space: pre-wrap;">{{ selectedCall.transcript }}</div>
+          </div>
+
+          <div class="mb-3" *ngIf="selectedCall.humanCallTranscript">
+            <label class="text-muted small fw-semibold">Human Receptionist Transcript</label>
+            <div class="p-3 bg-light rounded border text-secondary" style="max-height: 200px; overflow-y: auto; white-space: pre-wrap;">{{ selectedCall.humanCallTranscript }}</div>
+          </div>
+
+          <div *ngIf="selectedCall.recordingUrl" class="mb-2">
+            <label class="text-muted small fw-semibold">Audio Recording</label>
+            <div>
+              <audio controls class="w-100 mt-1">
+                <source [src]="selectedCall.recordingUrl" type="audio/mpeg">
+                Your browser does not support audio element.
+              </audio>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary btn-sm" (click)="closeModal()">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

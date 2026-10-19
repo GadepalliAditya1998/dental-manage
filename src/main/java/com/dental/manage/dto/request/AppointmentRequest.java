@@ -14,6 +14,8 @@ import java.time.LocalDateTime;
 @Builder
 public class AppointmentRequest {
 
+    private Long clinicId;
+
     @NotNull(message = "Patient ID is required")
     private Long patientId;
 

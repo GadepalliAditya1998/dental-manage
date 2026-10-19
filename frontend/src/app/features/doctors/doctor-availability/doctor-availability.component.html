@@ -1,0 +1,64 @@
+<div class="container-fluid py-2">
+  <div class="mb-4">
+    <a routerLink="/doctors" class="text-teal text-decoration-none fw-semibold small">
+      <i class="bi bi-arrow-left me-1"></i> Back to Doctors
+    </a>
+    <h2 class="fw-bold mt-2 mb-1 text-dark">
+      Doctor Availability: Dr. {{ doctor ? (doctor.firstName + ' ' + doctor.lastName) : '...' }}
+    </h2>
+    <p class="text-muted mb-0">Configure active working days and appointment consultation hours</p>
+  </div>
+
+  <div *ngIf="errorMsg" class="alert alert-danger border-0 shadow-sm mb-3">
+    <i class="bi bi-exclamation-triangle-fill me-2"></i> {{ errorMsg }}
+  </div>
+  <div *ngIf="successMsg" class="alert alert-success border-0 shadow-sm mb-3">
+    <i class="bi bi-check-circle-fill me-2"></i> {{ successMsg }}
+  </div>
+
+  <app-loading-spinner *ngIf="loading" message="Loading doctor availability..."></app-loading-spinner>
+
+  <div *ngIf="!loading" class="card card-custom border-0 p-4 bg-white" style="max-width: 800px;">
+    <div class="table-responsive">
+      <table class="table table-borderless align-middle mb-0">
+        <thead class="border-bottom">
+          <tr class="text-muted small text-uppercase">
+            <th style="width: 150px;">Day of Week</th>
+            <th style="width: 140px;">Status</th>
+            <th>Shift Start</th>
+            <th>Shift End</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let day of days" class="border-bottom">
+            <td class="fw-bold text-dark py-3">
+              {{ day.dayOfWeek | titlecase }}
+            </td>
+            <td>
+              <div class="form-check form-switch">
+                <input class="form-check-input cursor-pointer" type="checkbox" [(ngModel)]="day.isActive" [id]="'switch-' + day.dayOfWeek">
+                <label class="form-check-label small" [for]="'switch-' + day.dayOfWeek">
+                  {{ day.isActive ? 'Available' : 'Off Duty' }}
+                </label>
+              </div>
+            </td>
+            <td>
+              <input type="time" class="form-control form-control-sm" [(ngModel)]="day.startTime" [disabled]="!day.isActive">
+            </td>
+            <td>
+              <input type="time" class="form-control form-control-sm" [(ngModel)]="day.endTime" [disabled]="!day.isActive">
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="d-flex justify-content-end gap-2 mt-4">
+      <a routerLink="/doctors" class="btn btn-outline-secondary px-4">Back</a>
+      <button class="btn btn-primary bg-teal-gradient border-0 px-4" (click)="saveAvailability()" [disabled]="saving">
+        <span *ngIf="saving" class="spinner-border spinner-border-sm me-1"></span>
+        <i *ngIf="!saving" class="bi bi-save me-1"></i> Save Shifts
+      </button>
+    </div>
+  </div>
+</div>

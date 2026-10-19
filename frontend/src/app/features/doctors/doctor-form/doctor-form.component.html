@@ -1,0 +1,72 @@
+<div class="container-fluid py-2">
+  <div class="mb-4">
+    <a routerLink="/doctors" class="text-teal text-decoration-none fw-semibold small">
+      <i class="bi bi-arrow-left me-1"></i> Back to Doctors
+    </a>
+    <h2 class="fw-bold mt-2 mb-1 text-dark">{{ isEditMode ? 'Edit Doctor Profile' : 'Add New Doctor' }}</h2>
+    <p class="text-muted mb-0">Doctor credentials, specialty, contact information, and clinic active status</p>
+  </div>
+
+  <div *ngIf="errorMsg" class="alert alert-danger border-0 shadow-sm mb-3">
+    <i class="bi bi-exclamation-triangle-fill me-2"></i> {{ errorMsg }}
+  </div>
+  <div *ngIf="successMsg" class="alert alert-success border-0 shadow-sm mb-3">
+    <i class="bi bi-check-circle-fill me-2"></i> {{ successMsg }}
+  </div>
+
+  <div class="row">
+    <div class="col-12 col-md-8 col-lg-6">
+      <div class="card card-custom border-0 p-4 bg-white">
+        <form [formGroup]="doctorForm" (ngSubmit)="onSubmit()">
+          <div class="row g-3 mb-3">
+            <div class="col-sm-6">
+              <label class="form-label fw-semibold small">First Name *</label>
+              <input type="text" class="form-control" formControlName="firstName" placeholder="e.g. John"
+                     [class.is-invalid]="doctorForm.get('firstName')?.touched && doctorForm.get('firstName')?.invalid">
+              <div class="invalid-feedback">First name is required.</div>
+            </div>
+            <div class="col-sm-6">
+              <label class="form-label fw-semibold small">Last Name *</label>
+              <input type="text" class="form-control" formControlName="lastName" placeholder="e.g. Doe"
+                     [class.is-invalid]="doctorForm.get('lastName')?.touched && doctorForm.get('lastName')?.invalid">
+              <div class="invalid-feedback">Last name is required.</div>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold small">Specialization</label>
+            <select class="form-select" formControlName="specialization">
+              <option *ngFor="let s of specializations" [value]="s">{{ s }}</option>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold small">Email Address</label>
+            <input type="email" class="form-control" formControlName="email" placeholder="dr.john@smiledental.com"
+                   [class.is-invalid]="doctorForm.get('email')?.touched && doctorForm.get('email')?.invalid">
+            <div class="invalid-feedback">Please enter a valid email.</div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold small">Phone Number</label>
+            <input type="tel" class="form-control" formControlName="phoneNumber" placeholder="+1-555-010-9821">
+          </div>
+
+          <div class="form-check form-switch mb-4">
+            <input class="form-check-input" type="checkbox" id="isActiveSwitch" formControlName="isActive">
+            <label class="form-check-label small fw-semibold" for="isActiveSwitch">Active for Consultations</label>
+          </div>
+
+          <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary bg-teal-gradient border-0 px-4 py-2" [disabled]="submitting">
+              <span *ngIf="submitting" class="spinner-border spinner-border-sm me-1"></span>
+              <i *ngIf="!submitting" class="bi bi-check2 me-1"></i>
+              {{ isEditMode ? 'Save Changes' : 'Create Doctor' }}
+            </button>
+            <a routerLink="/doctors" class="btn btn-outline-secondary px-4 py-2">Cancel</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

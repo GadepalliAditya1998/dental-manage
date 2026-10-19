@@ -1,0 +1,50 @@
+databaseChangeLog:
+  # ── Add date_of_birth to users and patients tables ──────────────────────────
+  - changeSet:
+      id: 005-add-date-of-birth-columns
+      author: system
+      changes:
+        - addColumn:
+            tableName: users
+            columns:
+              - column:
+                  name: date_of_birth
+                  type: DATE
+        - addColumn:
+            tableName: patients
+            columns:
+              - column:
+                  name: date_of_birth
+                  type: DATE
+
+  # ── Composite index for fast patient lookup on users table ─────────────────
+  - changeSet:
+      id: 005-create-patient-lookup-index
+      author: system
+      changes:
+        - createIndex:
+            tableName: users
+            indexName: idx_users_patient_lookup
+            columns:
+              - column:
+                  name: role
+              - column:
+                  name: phone_number
+              - column:
+                  name: date_of_birth
+
+  # ── Update seeded default patient with sample DOB and phone ────────────────
+  - changeSet:
+      id: 005-update-default-patient-seed
+      author: system
+      changes:
+        - update:
+            tableName: users
+            columns:
+              - column:
+                  name: date_of_birth
+                  valueDate: "1990-05-15"
+              - column:
+                  name: phone_number
+                  value: "+1-555-0199"
+            where: "username = 'patient'"

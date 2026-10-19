@@ -24,7 +24,10 @@ import java.time.LocalDate;
 @Builder
 public class CallMetric extends BaseEntity {
 
-    @Column(name = "metric_date", nullable = false, unique = true)
+    @Column(name = "clinic_id")
+    private Long clinicId;
+
+    @Column(name = "metric_date", nullable = false)
     private LocalDate metricDate;
 
     @Column(name = "total_ai_calls")

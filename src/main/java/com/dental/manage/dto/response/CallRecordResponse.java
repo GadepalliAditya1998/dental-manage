@@ -15,6 +15,7 @@ import java.time.LocalDateTime;
 public class CallRecordResponse {
 
     private Long id;
+    private Long clinicId;
     private String retellCallId;
     private PatientResponse patient;
     private String callType;

@@ -1,0 +1,31 @@
+<!-- Global Alerts / 403 Access Denied Toast Container -->
+<div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 2000;">
+  <div *ngFor="let alert of alerts" class="toast show border-0 shadow-lg mb-2" role="alert" aria-live="assertive" aria-atomic="true">
+    <div class="toast-header text-white" [ngClass]="alert.type === 'danger' ? 'bg-danger' : (alert.type === 'warning' ? 'bg-warning text-dark' : 'bg-primary')">
+      <i class="bi me-2" [ngClass]="alert.type === 'danger' ? 'bi-shield-lock-fill' : 'bi-info-circle-fill'"></i>
+      <strong class="me-auto">{{ alert.title || 'Notice' }}</strong>
+      <button type="button" class="btn-close btn-close-white" (click)="dismissAlert(alert.id)" aria-label="Close"></button>
+    </div>
+    <div class="toast-body bg-white text-dark py-3">
+      <strong>{{ alert.message }}</strong>
+    </div>
+  </div>
+</div>
+
+<!-- Login View (Full Screen Shell) -->
+<ng-container *ngIf="isLoginPage">
+  <router-outlet></router-outlet>
+</ng-container>
+
+<!-- Authenticated Clinic Portal Shell -->
+<div class="d-flex flex-column min-vh-100" *ngIf="!isLoginPage">
+  <app-navbar [wsConnected]="wsConnected" [contextUser]="contextUser" (toggleSidebar)="toggleSidebar()"></app-navbar>
+
+  <div class="d-flex flex-grow-1">
+    <app-sidebar [isOpen]="sidebarOpen" [contextUser]="contextUser"></app-sidebar>
+
+    <main class="flex-grow-1 p-4 bg-light main-content">
+      <router-outlet></router-outlet>
+    </main>
+  </div>
+</div>

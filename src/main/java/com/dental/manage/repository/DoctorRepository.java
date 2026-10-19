@@ -23,4 +23,17 @@ public interface DoctorRepository extends JpaRepository<Doctor, Long> {
     @Query("SELECT DISTINCT d FROM Doctor d JOIN d.doctorServices ds " +
            "WHERE ds.service.id = :serviceId AND d.isActive = true AND d.isDeleted = false")
     List<Doctor> findByServiceId(@Param("serviceId") Long serviceId);
+
+    // Multi-tenant queries
+    List<Doctor> findByClinicIdAndIsActiveTrueAndIsDeletedFalse(Long clinicId);
+
+    List<Doctor> findByClinicIdAndIsDeletedFalse(Long clinicId);
+
+    Optional<Doctor> findByIdAndClinicIdAndIsDeletedFalse(Long id, Long clinicId);
+
+    Page<Doctor> findByClinicIdAndIsDeletedFalse(Long clinicId, Pageable pageable);
+
+    @Query("SELECT DISTINCT d FROM Doctor d JOIN d.doctorServices ds " +
+           "WHERE d.clinicId = :clinicId AND ds.service.id = :serviceId AND d.isActive = true AND d.isDeleted = false")
+    List<Doctor> findByClinicIdAndServiceId(@Param("clinicId") Long clinicId, @Param("serviceId") Long serviceId);
 }

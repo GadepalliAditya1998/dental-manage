@@ -1,0 +1,198 @@
+databaseChangeLog:
+  # ── Add clinic_id column to tables for multi-tenant support ───────────────────
+  - changeSet:
+      id: 002-add-clinic-id-columns
+      author: system
+      changes:
+        - addColumn:
+            tableName: clinic_details
+            columns:
+              - column:
+                  name: clinic_id
+                  type: BIGINT
+                  defaultValueNumeric: 1
+        - addColumn:
+            tableName: doctors
+            columns:
+              - column:
+                  name: clinic_id
+                  type: BIGINT
+                  defaultValueNumeric: 1
+        - addColumn:
+            tableName: services
+            columns:
+              - column:
+                  name: clinic_id
+                  type: BIGINT
+                  defaultValueNumeric: 1
+        - addColumn:
+            tableName: patients
+            columns:
+              - column:
+                  name: clinic_id
+                  type: BIGINT
+                  defaultValueNumeric: 1
+        - addColumn:
+            tableName: appointments
+            columns:
+              - column:
+                  name: clinic_id
+                  type: BIGINT
+                  defaultValueNumeric: 1
+        - addColumn:
+            tableName: call_records
+            columns:
+              - column:
+                  name: clinic_id
+                  type: BIGINT
+                  defaultValueNumeric: 1
+        - addColumn:
+            tableName: call_metrics
+            columns:
+              - column:
+                  name: clinic_id
+                  type: BIGINT
+                  defaultValueNumeric: 1
+        - addColumn:
+            tableName: doctor_availabilities
+            columns:
+              - column:
+                  name: clinic_id
+                  type: BIGINT
+                  defaultValueNumeric: 1
+        - addColumn:
+            tableName: doctor_services
+            columns:
+              - column:
+                  name: clinic_id
+                  type: BIGINT
+                  defaultValueNumeric: 1
+
+  # ── Backfill clinic_id = 1 for any existing rows ──────────────────────────────
+  - changeSet:
+      id: 002-backfill-clinic-id
+      author: system
+      changes:
+        - update:
+            tableName: clinic_details
+            columns:
+              - column:
+                  name: clinic_id
+                  valueNumeric: 1
+            where: "clinic_id IS NULL"
+        - update:
+            tableName: doctors
+            columns:
+              - column:
+                  name: clinic_id
+                  valueNumeric: 1
+            where: "clinic_id IS NULL"
+        - update:
+            tableName: services
+            columns:
+              - column:
+                  name: clinic_id
+                  valueNumeric: 1
+            where: "clinic_id IS NULL"
+        - update:
+            tableName: patients
+            columns:
+              - column:
+                  name: clinic_id
+                  valueNumeric: 1
+            where: "clinic_id IS NULL"
+        - update:
+            tableName: appointments
+            columns:
+              - column:
+                  name: clinic_id
+                  valueNumeric: 1
+            where: "clinic_id IS NULL"
+        - update:
+            tableName: call_records
+            columns:
+              - column:
+                  name: clinic_id
+                  valueNumeric: 1
+            where: "clinic_id IS NULL"
+        - update:
+            tableName: call_metrics
+            columns:
+              - column:
+                  name: clinic_id
+                  valueNumeric: 1
+            where: "clinic_id IS NULL"
+        - update:
+            tableName: doctor_availabilities
+            columns:
+              - column:
+                  name: clinic_id
+                  valueNumeric: 1
+            where: "clinic_id IS NULL"
+        - update:
+            tableName: doctor_services
+            columns:
+              - column:
+                  name: clinic_id
+                  valueNumeric: 1
+            where: "clinic_id IS NULL"
+
+  # ── Add indexes for clinic_id to optimize tenant filtering ────────────────────
+  - changeSet:
+      id: 002-add-clinic-id-indexes
+      author: system
+      changes:
+        - createIndex:
+            tableName: clinic_details
+            indexName: idx_clinic_details_clinic_id
+            columns:
+              - column:
+                  name: clinic_id
+        - createIndex:
+            tableName: doctors
+            indexName: idx_doctors_clinic_id
+            columns:
+              - column:
+                  name: clinic_id
+        - createIndex:
+            tableName: services
+            indexName: idx_services_clinic_id
+            columns:
+              - column:
+                  name: clinic_id
+        - createIndex:
+            tableName: patients
+            indexName: idx_patients_clinic_id
+            columns:
+              - column:
+                  name: clinic_id
+        - createIndex:
+            tableName: appointments
+            indexName: idx_appointments_clinic_id
+            columns:
+              - column:
+                  name: clinic_id
+        - createIndex:
+            tableName: call_records
+            indexName: idx_call_records_clinic_id
+            columns:
+              - column:
+                  name: clinic_id
+        - createIndex:
+            tableName: call_metrics
+            indexName: idx_call_metrics_clinic_id
+            columns:
+              - column:
+                  name: clinic_id
+        - createIndex:
+            tableName: doctor_availabilities
+            indexName: idx_doctor_availabilities_clinic_id
+            columns:
+              - column:
+                  name: clinic_id
+        - createIndex:
+            tableName: doctor_services
+            indexName: idx_doctor_services_clinic_id
+            columns:
+              - column:
+                  name: clinic_id

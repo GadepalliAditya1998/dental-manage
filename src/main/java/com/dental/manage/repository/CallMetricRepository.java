@@ -18,4 +18,16 @@ public interface CallMetricRepository extends JpaRepository<CallMetric, Long> {
     @Query("SELECT cm FROM CallMetric cm WHERE cm.metricDate BETWEEN :from AND :to " +
            "AND cm.isDeleted = false ORDER BY cm.metricDate ASC")
     List<CallMetric> findByDateRange(@Param("from") LocalDate from, @Param("to") LocalDate to);
+
+    // Multi-tenant queries
+    Optional<CallMetric> findByClinicIdAndMetricDate(Long clinicId, LocalDate metricDate);
+
+    @Query("SELECT cm FROM CallMetric cm WHERE cm.clinicId = :clinicId AND cm.metricDate BETWEEN :from AND :to " +
+           "AND cm.isDeleted = false ORDER BY cm.metricDate ASC")
+    List<CallMetric> findByClinicIdAndDateRange(
+            @Param("clinicId") Long clinicId,
+            @Param("from") LocalDate from,
+            @Param("to") LocalDate to);
+
+    List<CallMetric> findByClinicIdAndIsDeletedFalse(Long clinicId);
 }

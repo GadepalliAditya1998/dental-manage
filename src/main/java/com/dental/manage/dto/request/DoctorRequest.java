@@ -12,6 +12,8 @@ import lombok.NoArgsConstructor;
 @Builder
 public class DoctorRequest {
 
+    private Long clinicId;
+
     @NotBlank(message = "First name is required")
     private String firstName;
 

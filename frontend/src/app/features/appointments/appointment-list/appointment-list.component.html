@@ -1,0 +1,170 @@
+<div class="container-fluid py-2">
+  <div class="d-flex flex-wrap align-items-center justify-content-between mb-4">
+    <div>
+      <h2 class="fw-bold mb-1 text-dark">Appointments Management</h2>
+      <p class="text-muted mb-0">View scheduled consultations, filter by doctor/date, and update status</p>
+    </div>
+    <div>
+      <a routerLink="/appointments/new" class="btn btn-primary bg-teal-gradient border-0">
+        <i class="bi bi-calendar-plus me-1"></i> Book New Appointment
+      </a>
+    </div>
+  </div>
+
+  <!-- Filters Bar -->
+  <div class="card card-custom p-3 border-0 mb-4">
+    <div class="row g-3 align-items-end">
+      <div class="col-12 col-sm-4 col-md-3">
+        <label class="form-label small fw-semibold text-muted">Filter by Date</label>
+        <input type="date" class="form-control" [(ngModel)]="filterDate" (change)="onFilterChange()">
+      </div>
+      <div class="col-12 col-sm-4 col-md-3">
+        <label class="form-label small fw-semibold text-muted">Doctor</label>
+        <select class="form-select" [(ngModel)]="filterDoctorId" (change)="onFilterChange()">
+          <option [ngValue]="null">All Doctors</option>
+          <option *ngFor="let doc of doctors" [ngValue]="doc.id">
+            Dr. {{ doc.firstName }} {{ doc.lastName }}
+          </option>
+        </select>
+      </div>
+      <div class="col-12 col-sm-4 col-md-3">
+        <label class="form-label small fw-semibold text-muted">Status</label>
+        <select class="form-select" [(ngModel)]="filterStatus" (change)="onFilterChange()">
+          <option value="">All Statuses</option>
+          <option value="SCHEDULED">Scheduled</option>
+          <option value="CONFIRMED">Confirmed</option>
+          <option value="REMINDER_SENT">Reminder Sent</option>
+          <option value="RESCHEDULED">Rescheduled</option>
+          <option value="COMPLETED">Completed</option>
+          <option value="CANCELLED">Cancelled</option>
+          <option value="NO_SHOW">No Show</option>
+        </select>
+      </div>
+      <div class="col-12 col-md-3 d-flex gap-2">
+        <button class="btn btn-outline-secondary w-100" (click)="filterDate = ''; filterDoctorId = null; filterStatus = ''; onFilterChange()">
+          <i class="bi bi-x-circle me-1"></i> Reset
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <app-loading-spinner *ngIf="loading" message="Loading appointments..."></app-loading-spinner>
+
+  <div *ngIf="errorMessage" class="alert alert-info border-0 shadow-sm">
+    <i class="bi bi-info-circle me-2"></i> {{ errorMessage }}
+  </div>
+
+  <!-- Appointments Table -->
+  <div *ngIf="!loading" class="card card-custom border-0">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th class="ps-3">ID</th>
+            <th>Date & Time</th>
+            <th>Patient</th>
+            <th>Doctor</th>
+            <th>Treatment / Service</th>
+            <th>Status</th>
+            <th>Confirmation</th>
+            <th class="text-end pe-3">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let appt of appointments">
+            <td class="ps-3 text-muted">#{{ appt.id }}</td>
+            <td class="fw-semibold text-dark">
+              {{ appt.appointmentStart | date:'MMM d, y' }}<br>
+              <small class="text-muted">{{ appt.appointmentStart | date:'shortTime' }} - {{ appt.appointmentEnd | date:'shortTime' }}</small>
+            </td>
+            <td>
+              <div class="fw-semibold text-dark">{{ appt.patient.firstName }} {{ appt.patient.lastName }}</div>
+              <small class="text-muted"><i class="bi bi-telephone me-1"></i>{{ appt.patient.phoneNumber }}</small>
+            </td>
+            <td>
+              <div class="fw-semibold">Dr. {{ appt.doctor.firstName }} {{ appt.doctor.lastName }}</div>
+              <small class="text-muted">{{ appt.doctor.specialization || 'General Dentist' }}</small>
+            </td>
+            <td>
+              <span class="badge bg-light text-dark border">{{ appt.service.name }}</span>
+            </td>
+            <td>
+              <span [ngClass]="(appt.status | statusBadge).cssClass">
+                {{ (appt.status | statusBadge).text }}
+              </span>
+            </td>
+            <td>
+              <span *ngIf="appt.confirmationStatus === 'CONFIRMED'" class="badge bg-success-subtle text-success">
+                <i class="bi bi-check-circle me-1"></i> Confirmed
+              </span>
+              <span *ngIf="appt.confirmationStatus === 'DECLINED'" class="badge bg-danger-subtle text-danger">
+                <i class="bi bi-x-circle me-1"></i> Declined
+              </span>
+              <span *ngIf="!appt.confirmationStatus || appt.confirmationStatus === 'PENDING'" class="badge bg-secondary-subtle text-muted">
+                Pending
+              </span>
+            </td>
+            <td class="text-end pe-3">
+              <div class="btn-group btn-group-sm">
+                <!-- Status changer -->
+                <button *ngIf="appt.status !== 'CONFIRMED' && appt.status !== 'COMPLETED' && appt.status !== 'CANCELLED'"
+                        class="btn btn-outline-success" title="Mark Confirmed"
+                        (click)="updateStatus(appt, 'CONFIRMED')">
+                  <i class="bi bi-check-lg"></i>
+                </button>
+                <button *ngIf="appt.status !== 'COMPLETED' && appt.status !== 'CANCELLED'"
+                        class="btn btn-outline-primary" title="Mark Completed"
+                        (click)="updateStatus(appt, 'COMPLETED')">
+                  <i class="bi bi-flag"></i>
+                </button>
+                <button *ngIf="appt.status !== 'CANCELLED' && appt.status !== 'COMPLETED'"
+                        class="btn btn-outline-danger" title="Cancel Appointment"
+                        (click)="openCancelModal(appt)">
+                  <i class="bi bi-trash"></i>
+                </button>
+                <button class="btn btn-outline-secondary" title="Sync Calendar"
+                        [disabled]="appt.calendarEventAdded"
+                        (click)="addCalendarEvent(appt)">
+                  <i class="bi" [ngClass]="appt.calendarEventAdded ? 'bi-calendar-check text-success' : 'bi-calendar-event'"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+          <tr *ngIf="appointments.length === 0">
+            <td colspan="8" class="text-center py-5 text-muted">
+              <i class="bi bi-calendar-x fs-1 d-block mb-2 text-secondary"></i>
+              No appointments found for the selected filter criteria.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Cancel Modal -->
+  <div class="modal fade show d-block" *ngIf="cancellingAppt" tabindex="-1" style="background: rgba(0,0,0,0.5);">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow">
+        <div class="modal-header bg-danger text-white">
+          <h5 class="modal-title fw-bold">Cancel Appointment</h5>
+          <button type="button" class="btn-close btn-close-white" (click)="closeCancelModal()"></button>
+        </div>
+        <div class="modal-body p-4">
+          <p class="mb-3">
+            Are you sure you want to cancel the appointment for
+            <strong>{{ cancellingAppt.patient.firstName }} {{ cancellingAppt.patient.lastName }}</strong>
+            with <strong>Dr. {{ cancellingAppt.doctor.lastName }}</strong>?
+          </p>
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Cancellation Reason (Optional)</label>
+            <textarea class="form-control" rows="2" [(ngModel)]="cancelReason" placeholder="Patient request, doctor emergency, etc."></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary btn-sm" (click)="closeCancelModal()">Dismiss</button>
+          <button type="button" class="btn btn-danger btn-sm" (click)="confirmCancel()">Confirm Cancellation</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

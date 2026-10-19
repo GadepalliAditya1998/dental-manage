@@ -21,10 +21,15 @@ import lombok.Setter;
        uniqueConstraints = @UniqueConstraint(columnNames = {"doctor_id", "service_id"}))
 @Getter
 @Setter
-@NoArgsConstructor
 @AllArgsConstructor
 @Builder
 public class DoctorService extends BaseEntity {
+
+    public DoctorService() {
+    }
+
+    @Column(name = "clinic_id")
+    private Long clinicId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "doctor_id", nullable = false)

@@ -25,6 +25,9 @@ import java.util.List;
 @Builder
 public class Doctor extends BaseEntity {
 
+    @Column(name = "clinic_id")
+    private Long clinicId;
+
     @Column(name = "first_name", nullable = false, length = 100)
     private String firstName;
 

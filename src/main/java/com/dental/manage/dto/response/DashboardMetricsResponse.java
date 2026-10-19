@@ -17,6 +17,7 @@ import java.util.List;
 @Builder
 public class DashboardMetricsResponse {
 
+    private Long clinicId;
     private long totalAiCalls;
     private long totalHumanTransfers;
     private long successfulBookings;

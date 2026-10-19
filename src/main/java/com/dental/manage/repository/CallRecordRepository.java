@@ -44,4 +44,20 @@ public interface CallRecordRepository extends JpaRepository<CallRecord, Long> {
     Double avgDurationByDateRange(
             @Param("start") LocalDateTime start,
             @Param("end") LocalDateTime end);
+
+    // Multi-tenant queries
+    List<CallRecord> findByClinicIdAndIsDeletedFalse(Long clinicId);
+
+    Page<CallRecord> findByClinicIdAndIsDeletedFalse(Long clinicId, Pageable pageable);
+
+    Optional<CallRecord> findByIdAndClinicIdAndIsDeletedFalse(Long id, Long clinicId);
+
+    Optional<CallRecord> findByClinicIdAndRetellCallId(Long clinicId, String retellCallId);
+
+    @Query("SELECT cr FROM CallRecord cr WHERE cr.clinicId = :clinicId AND cr.isDeleted = false " +
+           "AND cr.callStartedAt BETWEEN :start AND :end")
+    List<CallRecord> findByClinicIdAndDateRange(
+            @Param("clinicId") Long clinicId,
+            @Param("start") LocalDateTime start,
+            @Param("end") LocalDateTime end);
 }

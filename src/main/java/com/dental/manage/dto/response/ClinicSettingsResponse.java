@@ -14,6 +14,7 @@ import java.time.LocalTime;
 public class ClinicSettingsResponse {
 
     private Long id;
+    private Long clinicId;
     private String clinicName;
     private String clinicPhone;
     private String receptionistPhone;

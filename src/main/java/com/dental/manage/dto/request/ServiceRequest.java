@@ -16,6 +16,8 @@ import java.math.BigDecimal;
 @Builder
 public class ServiceRequest {
 
+    private Long clinicId;
+
     @NotBlank(message = "Service name is required")
     private String name;
 

@@ -801,3 +801,176 @@ databaseChangeLog:
               - column:
                   name: modified_by
                   value: "SYSTEM"
+
+  - changeSet:
+      id: 001-seed-services
+      author: system
+      changes:
+        - insert:
+            tableName: services
+            columns:
+              - column:
+                  name: name
+                  value: "General checkup"
+              - column:
+                  name: description
+                  value: "Comprehensive routine dental examination including oral cancer screening, gum health evaluation, and overall dental hygiene assessment."
+              - column:
+                  name: duration_minutes
+                  valueNumeric: 30
+              - column:
+                  name: price
+                  valueNumeric: 60.00
+              - column:
+                  name: is_active
+                  valueBoolean: true
+              - column:
+                  name: created_by
+                  value: "SYSTEM"
+              - column:
+                  name: modified_by
+                  value: "SYSTEM"
+        - insert:
+            tableName: services
+            columns:
+              - column:
+                  name: name
+                  value: "Teeth scaling"
+              - column:
+                  name: description
+                  value: "Professional ultrasonic deep cleaning procedure to eliminate plaque, calculus, and tartar buildup from enamel surfaces and below the gumline."
+              - column:
+                  name: duration_minutes
+                  valueNumeric: 60
+              - column:
+                  name: price
+                  valueNumeric: 120.00
+              - column:
+                  name: is_active
+                  valueBoolean: true
+              - column:
+                  name: created_by
+                  value: "SYSTEM"
+              - column:
+                  name: modified_by
+                  value: "SYSTEM"
+        - insert:
+            tableName: services
+            columns:
+              - column:
+                  name: name
+                  value: "Root canal"
+              - column:
+                  name: description
+                  value: "Endodontic therapy to remove infected or inflamed pulp tissue, thoroughly disinfect and shape the root canal, and seal it to prevent reinfection."
+              - column:
+                  name: duration_minutes
+                  valueNumeric: 60
+              - column:
+                  name: price
+                  valueNumeric: 750.00
+              - column:
+                  name: is_active
+                  valueBoolean: true
+              - column:
+                  name: created_by
+                  value: "SYSTEM"
+              - column:
+                  name: modified_by
+                  value: "SYSTEM"
+        - insert:
+            tableName: services
+            columns:
+              - column:
+                  name: name
+                  value: "Tooth removal"
+              - column:
+                  name: description
+                  value: "Complex or surgical extraction of impacted, broken, or severely decayed teeth performed under local anesthesia with comprehensive post-extraction care."
+              - column:
+                  name: duration_minutes
+                  valueNumeric: 60
+              - column:
+                  name: price
+                  valueNumeric: 250.00
+              - column:
+                  name: is_active
+                  valueBoolean: true
+              - column:
+                  name: created_by
+                  value: "SYSTEM"
+              - column:
+                  name: modified_by
+                  value: "SYSTEM"
+        - insert:
+            tableName: services
+            columns:
+              - column:
+                  name: name
+                  value: "Doctor consultation"
+              - column:
+                  name: description
+                  value: "Personalized clinical consultation with a dental specialist for diagnosis, evaluation of symptoms, treatment planning, and expert guidance."
+              - column:
+                  name: duration_minutes
+                  valueNumeric: 20
+              - column:
+                  name: price
+                  valueNumeric: 50.00
+              - column:
+                  name: is_active
+                  valueBoolean: true
+              - column:
+                  name: created_by
+                  value: "SYSTEM"
+              - column:
+                  name: modified_by
+                  value: "SYSTEM"
+        - insert:
+            tableName: services
+            columns:
+              - column:
+                  name: name
+                  value: "Dental fillings"
+              - column:
+                  name: description
+                  value: "Tooth-colored composite resin filling to repair decayed, cracked, or worn teeth, restoring strength, functionality, and natural appearance."
+              - column:
+                  name: duration_minutes
+                  valueNumeric: 30
+              - column:
+                  name: price
+                  valueNumeric: 150.00
+              - column:
+                  name: is_active
+                  valueBoolean: true
+              - column:
+                  name: created_by
+                  value: "SYSTEM"
+              - column:
+                  name: modified_by
+                  value: "SYSTEM"
+        - insert:
+            tableName: services
+            columns:
+              - column:
+                  name: name
+                  value: "Tooth removal"
+              - column:
+                  name: description
+                  value: "Routine simple extraction of an erupted, problematic tooth under local anesthesia for quick relief and smooth recovery."
+              - column:
+                  name: duration_minutes
+                  valueNumeric: 45
+              - column:
+                  name: price
+                  valueNumeric: 150.00
+              - column:
+                  name: is_active
+                  valueBoolean: true
+              - column:
+                  name: created_by
+                  value: "SYSTEM"
+              - column:
+                  name: modified_by
+                  value: "SYSTEM"
