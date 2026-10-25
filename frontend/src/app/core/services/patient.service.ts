@@ -3,7 +3,13 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { ApiResponse } from '../models/api-response.model';
-import { PatientRequest, PatientResponse } from '../models/patient.model';
+import {
+  PatientLookupRequest,
+  PatientLookupResponse,
+  PatientRequest,
+  PatientResponse,
+  PatientUpcomingAppointmentResponse
+} from '../models/patient.model';
 
 @Injectable({
   providedIn: 'root'
@@ -13,6 +19,18 @@ export class PatientService {
 
   constructor(private http: HttpClient) {}
 
+  lookupPatient(request: PatientLookupRequest): Observable<ApiResponse<PatientLookupResponse>> {
+    let params = new HttpParams();
+    if (request.patientId) params = params.set('patientId', request.patientId);
+    if (request.phoneNumber) params = params.set('phoneNumber', request.phoneNumber);
+    if (request.mobileNumber) params = params.set('mobileNumber', request.mobileNumber);
+    if (request.fullName) params = params.set('fullName', request.fullName);
+    if (request.dateOfBirth) params = params.set('dateOfBirth', request.dateOfBirth);
+    if (request.clinicId) params = params.set('clinicId', request.clinicId.toString());
+
+    return this.http.get<ApiResponse<PatientLookupResponse>>(`${this.baseUrl}/lookup`, { params });
+  }
+
   getPatients(search?: string): Observable<ApiResponse<PatientResponse[]>> {
     let params = new HttpParams();
     if (search) params = params.set('search', search);
@@ -21,6 +39,10 @@ export class PatientService {
 
   getPatientById(id: number): Observable<ApiResponse<PatientResponse>> {
     return this.http.get<ApiResponse<PatientResponse>>(`${this.baseUrl}/${id}`);
+  }
+
+  getUpcomingAppointments(patientId: number): Observable<ApiResponse<PatientUpcomingAppointmentResponse[]>> {
+    return this.http.get<ApiResponse<PatientUpcomingAppointmentResponse[]>>(`${this.baseUrl}/${patientId}/appointments/upcoming`);
   }
 
   createPatient(request: PatientRequest): Observable<ApiResponse<PatientResponse>> {

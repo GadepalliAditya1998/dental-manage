@@ -19,6 +19,7 @@ import java.time.LocalDateTime;
 public class PatientLookupResponse {
 
     private Long id;
+    private String patientId;
     private Long clinicId;
     private String username;
     private String fullName;

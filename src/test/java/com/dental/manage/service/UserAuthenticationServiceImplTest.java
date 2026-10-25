@@ -2,10 +2,12 @@ package com.dental.manage.service;
 
 import com.dental.manage.dto.request.LoginRequest;
 import com.dental.manage.dto.response.LoginResponse;
+import com.dental.manage.entity.Doctor;
 import com.dental.manage.entity.User;
 import com.dental.manage.enums.UserRole;
 import com.dental.manage.exception.AccessDeniedException;
 import com.dental.manage.exception.InvalidCredentialsException;
+import com.dental.manage.repository.DoctorRepository;
 import com.dental.manage.repository.UserRepository;
 import com.dental.manage.service.impl.UserAuthenticationServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
@@ -105,6 +107,7 @@ class UserAuthenticationServiceImplTest {
         assertThat(response.getToken()).isEqualTo("mock.doctor.token");
         assertThat(response.getRole()).isEqualTo("DOCTOR");
         assertThat(response.getId()).isEqualTo(10L);
+        assertThat(response.getDoctorId()).isEqualTo(10L);
     }
 
     @Test

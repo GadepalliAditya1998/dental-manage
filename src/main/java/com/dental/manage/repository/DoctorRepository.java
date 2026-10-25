@@ -16,6 +16,8 @@ public interface DoctorRepository extends JpaRepository<Doctor, Long> {
 
     Optional<Doctor> findByIdAndIsDeletedFalse(Long id);
 
+    List<Doctor> findByIsDeletedFalse();
+
     List<Doctor> findByIsActiveTrueAndIsDeletedFalse();
 
     Page<Doctor> findByIsDeletedFalse(Pageable pageable);
@@ -36,4 +38,12 @@ public interface DoctorRepository extends JpaRepository<Doctor, Long> {
     @Query("SELECT DISTINCT d FROM Doctor d JOIN d.doctorServices ds " +
            "WHERE d.clinicId = :clinicId AND ds.service.id = :serviceId AND d.isActive = true AND d.isDeleted = false")
     List<Doctor> findByClinicIdAndServiceId(@Param("clinicId") Long clinicId, @Param("serviceId") Long serviceId);
+
+    Optional<Doctor> findFirstByClinicIdAndIsActiveTrueAndIsDeletedFalse(Long clinicId);
+
+    Optional<Doctor> findByClinicIdAndEmailIgnoreCaseAndIsDeletedFalse(Long clinicId, String email);
+
+    Optional<Doctor> findByEmailIgnoreCaseAndIsDeletedFalse(String email);
+
+    long countByClinicIdAndIsActiveTrueAndIsDeletedFalse(Long clinicId);
 }

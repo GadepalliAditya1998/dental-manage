@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { PatientService } from '../../../core/services/patient.service';
 import { PatientResponse } from '../../../core/models/patient.model';
 
@@ -16,7 +16,10 @@ export class PatientListComponent implements OnInit {
   leadFilter: 'ALL' | 'NEW' | 'EXISTING' = 'ALL';
   errorMessage = '';
 
-  constructor(private patientService: PatientService) {}
+  constructor(
+    private patientService: PatientService,
+    private cdr: ChangeDetectorRef
+  ) {}
 
   ngOnInit(): void {
     this.loadPatients();
@@ -25,23 +28,27 @@ export class PatientListComponent implements OnInit {
   loadPatients(): void {
     this.loading = true;
     this.errorMessage = '';
+    this.cdr.markForCheck();
 
     this.patientService.getPatients().subscribe({
       next: (res) => {
-        this.patients = res?.data || [];
+        const patientList = Array.isArray(res) ? res : (res?.data || []);
+        this.patients = Array.isArray(patientList) ? patientList : [];
         this.applyFilter();
         this.loading = false;
+        this.cdr.markForCheck();
       },
       error: (err) => {
         console.warn('Patients API error:', err);
         this.errorMessage = 'Backend endpoint GET /api/patients is pending or unreachable.';
         this.loading = false;
+        this.cdr.markForCheck();
       }
     });
   }
 
   applyFilter(): void {
-    let result = this.patients;
+    let result = Array.isArray(this.patients) ? [...this.patients] : [];
 
     if (this.leadFilter === 'NEW') {
       result = result.filter(p => p.isNewLead);
@@ -49,17 +56,20 @@ export class PatientListComponent implements OnInit {
       result = result.filter(p => !p.isNewLead);
     }
 
-    if (this.searchQuery.trim()) {
-      const q = this.searchQuery.toLowerCase();
+    if (this.searchQuery && this.searchQuery.trim()) {
+      const q = this.searchQuery.toLowerCase().trim();
       result = result.filter(p =>
         (p.firstName?.toLowerCase().includes(q) ||
         p.lastName?.toLowerCase().includes(q) ||
+        p.fullName?.toLowerCase().includes(q) ||
+        p.patientId?.toLowerCase().includes(q) ||
         p.phoneNumber?.includes(q) ||
         p.email?.toLowerCase().includes(q))
       );
     }
 
     this.filteredPatients = result;
+    this.cdr.markForCheck();
   }
 
   deletePatient(id: number): void {
@@ -68,8 +78,12 @@ export class PatientListComponent implements OnInit {
       next: () => {
         this.patients = this.patients.filter(p => p.id !== id);
         this.applyFilter();
+        this.cdr.markForCheck();
       },
-      error: (err) => alert('Failed to delete patient. Backend API may be unreachable.')
+      error: () => {
+        alert('Failed to delete patient. Backend API may be unreachable.');
+        this.cdr.markForCheck();
+      }
     });
   }
 }

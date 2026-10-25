@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import java.util.List;
@@ -17,7 +18,17 @@ import java.util.Optional;
 @Repository
 public interface PatientRepository extends JpaRepository<Patient, Long> {
 
+    Optional<Patient> findByPatientIdAndIsDeletedFalse(String patientId);
+
+    Optional<Patient> findByClinicIdAndPatientIdAndIsDeletedFalse(Long clinicId, String patientId);
+
+    Optional<Patient> findByPhoneNumberAndDateOfBirthAndIsDeletedFalse(String phoneNumber, LocalDate dateOfBirth);
+
+    Optional<Patient> findByClinicIdAndPhoneNumberAndDateOfBirthAndIsDeletedFalse(Long clinicId, String phoneNumber, LocalDate dateOfBirth);
+
     Optional<Patient> findByPhoneNumberAndIsDeletedFalse(String phoneNumber);
+
+    boolean existsByPhoneNumberAndIsDeletedFalse(String phoneNumber);
 
     Optional<Patient> findByIdAndIsDeletedFalse(Long id);
 
@@ -45,6 +56,17 @@ public interface PatientRepository extends JpaRepository<Patient, Long> {
            "OR p.phoneNumber LIKE CONCAT('%', :search, '%') " +
            "OR LOWER(p.email) LIKE LOWER(CONCAT('%', :search, '%')))")
     Page<Patient> searchPatientsByClinicId(@Param("clinicId") Long clinicId, @Param("search") String search, Pageable pageable);
+
+    @Query("SELECT p FROM Patient p WHERE p.isDeleted = false " +
+           "AND (:clinicId IS NULL OR p.clinicId = :clinicId) " +
+           "AND (:search IS NULL OR :search = '' " +
+           "     OR LOWER(p.firstName) LIKE LOWER(CONCAT('%', :search, '%')) " +
+           "     OR LOWER(p.lastName) LIKE LOWER(CONCAT('%', :search, '%')) " +
+           "     OR p.phoneNumber LIKE CONCAT('%', :search, '%') " +
+           "     OR LOWER(p.email) LIKE LOWER(CONCAT('%', :search, '%')) " +
+           "     OR LOWER(p.patientId) LIKE LOWER(CONCAT('%', :search, '%'))) " +
+           "ORDER BY p.id DESC")
+    List<Patient> findFilteredPatients(@Param("clinicId") Long clinicId, @Param("search") String search);
 
     /**
      * Find upcoming appointments for a patient starting from a given datetime.

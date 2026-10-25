@@ -1,6 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, NgZone } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { AppointmentService } from '../../../core/services/appointment.service';
 import { DoctorService } from '../../../core/services/doctor.service';
 import { PatientService } from '../../../core/services/patient.service';
@@ -33,7 +33,10 @@ export class AppointmentFormComponent implements OnInit {
     private doctorService: DoctorService,
     private patientService: PatientService,
     private catalogService: ServiceCatalogService,
-    private router: Router
+    private router: Router,
+    private route: ActivatedRoute,
+    private cdr: ChangeDetectorRef,
+    private ngZone: NgZone
   ) {}
 
   ngOnInit(): void {
@@ -59,18 +62,44 @@ export class AppointmentFormComponent implements OnInit {
 
   loadDropdownData(): void {
     this.doctorService.getDoctors().subscribe({
-      next: (res) => this.doctors = res?.data || [],
-      error: (err) => console.warn('Doctors API error:', err)
+      next: (res) => {
+        const list = Array.isArray(res) ? res : (res?.data || []);
+        this.doctors = Array.isArray(list) ? list : [];
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        console.warn('Doctors API error:', err);
+        this.cdr.markForCheck();
+      }
     });
 
     this.patientService.getPatients().subscribe({
-      next: (res) => this.patients = res?.data || [],
-      error: (err) => console.warn('Patients API error:', err)
+      next: (res) => {
+        const list = Array.isArray(res) ? res : (res?.data || []);
+        this.patients = Array.isArray(list) ? list : [];
+        this.route.queryParams.subscribe(params => {
+          if (params['patientId']) {
+            this.appointmentForm.patchValue({ patientId: Number(params['patientId']) });
+          }
+        });
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        console.warn('Patients API error:', err);
+        this.cdr.markForCheck();
+      }
     });
 
     this.catalogService.getServices().subscribe({
-      next: (res) => this.services = res?.data || [],
-      error: (err) => console.warn('Services API error:', err)
+      next: (res) => {
+        const list = Array.isArray(res) ? res : (res?.data || []);
+        this.services = Array.isArray(list) ? list : [];
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        console.warn('Services API error:', err);
+        this.cdr.markForCheck();
+      }
     });
   }
 
@@ -80,17 +109,22 @@ export class AppointmentFormComponent implements OnInit {
 
     if (!doctorId || !date) {
       this.availableSlots = [];
+      this.loadingSlots = false;
+      this.cdr.markForCheck();
       return;
     }
 
     this.loadingSlots = true;
     this.availableSlots = [];
     this.appointmentForm.get('selectedSlot')?.setValue('');
+    this.cdr.markForCheck();
 
     this.appointmentService.getAvailableSlots(Number(doctorId), date).subscribe({
       next: (res) => {
-        this.availableSlots = res?.data?.availableSlots || [];
+        const data = res?.data || (res as any);
+        this.availableSlots = data?.availableSlots || [];
         this.loadingSlots = false;
+        this.cdr.markForCheck();
       },
       error: (err) => {
         console.warn('Slots API unreachable or error:', err);
@@ -104,6 +138,7 @@ export class AppointmentFormComponent implements OnInit {
           { startTime: '16:30:00', endTime: '17:00:00', displayTime: '04:30 PM' },
         ];
         this.loadingSlots = false;
+        this.cdr.markForCheck();
       }
     });
   }
@@ -111,12 +146,14 @@ export class AppointmentFormComponent implements OnInit {
   onSubmit(): void {
     if (this.appointmentForm.invalid) {
       this.appointmentForm.markAllAsTouched();
+      this.cdr.markForCheck();
       return;
     }
 
     this.submitting = true;
     this.errorMsg = '';
     this.successMsg = '';
+    this.cdr.markForCheck();
 
     const formVal = this.appointmentForm.value;
     const appointmentDateTime = `${formVal.date}T${formVal.selectedSlot}`;
@@ -132,11 +169,17 @@ export class AppointmentFormComponent implements OnInit {
       next: () => {
         this.submitting = false;
         this.successMsg = 'Appointment scheduled successfully!';
-        setTimeout(() => this.router.navigate(['/appointments']), 1200);
+        this.cdr.markForCheck();
+        setTimeout(() => {
+          this.ngZone.run(() => {
+            this.router.navigate(['/appointments']);
+          });
+        }, 1000);
       },
       error: (err) => {
         this.submitting = false;
-        this.errorMsg = 'Failed to book appointment: Backend POST /api/appointments is pending or unreachable.';
+        this.errorMsg = err?.error?.message || 'Failed to book appointment: Backend POST /api/appointments is pending or unreachable.';
+        this.cdr.markForCheck();
       }
     });
   }

@@ -1,8 +1,7 @@
 package com.dental.manage.dto.request;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonFormat;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Past;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -14,7 +13,10 @@ import java.time.LocalDate;
 
 /**
  * Request payload for patient lookup.
- * Phone number, full name, and date of birth are all mandatory.
+ * Supports searching via:
+ * 1) Unique string patientId
+ * OR
+ * 2) Patient's mobile number and date of birth.
  */
 @Data
 @NoArgsConstructor
@@ -22,17 +24,21 @@ import java.time.LocalDate;
 @Builder
 public class PatientLookupRequest {
 
-    @NotBlank(message = "Phone number is mandatory")
+    @JsonAlias({"patient_id", "id"})
+    private String patientId;
+
+    @JsonAlias({"mobileNumber", "mobile_number", "mobile", "phone", "phone_number"})
     private String phoneNumber;
 
-    @NotBlank(message = "Full name is mandatory")
+    @JsonAlias({"name", "patientName"})
     private String fullName;
 
-    @NotNull(message = "Date of birth is mandatory")
     @Past(message = "Date of birth must be in the past")
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
     @JsonFormat(pattern = "yyyy-MM-dd")
+    @JsonAlias({"dob", "date_of_birth"})
     private LocalDate dateOfBirth;
 
+    @JsonAlias({"clinic_id"})
     private Long clinicId;
 }

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { AppointmentService } from '../../../core/services/appointment.service';
 import { DoctorService } from '../../../core/services/doctor.service';
 import { AppointmentResponse, AppointmentStatus } from '../../../core/models/appointment.model';
@@ -26,7 +26,8 @@ export class AppointmentListComponent implements OnInit {
 
   constructor(
     private appointmentService: AppointmentService,
-    private doctorService: DoctorService
+    private doctorService: DoctorService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -39,15 +40,21 @@ export class AppointmentListComponent implements OnInit {
   loadDoctors(): void {
     this.doctorService.getDoctors().subscribe({
       next: (res) => {
-        if (res?.data) this.doctors = res.data;
+        const list = Array.isArray(res) ? res : (res?.data || []);
+        this.doctors = Array.isArray(list) ? list : [];
+        this.cdr.markForCheck();
       },
-      error: (err) => console.warn('Could not load doctors', err)
+      error: (err) => {
+        console.warn('Could not load doctors', err);
+        this.cdr.markForCheck();
+      }
     });
   }
 
   loadAppointments(): void {
     this.loading = true;
     this.errorMessage = '';
+    this.cdr.markForCheck();
 
     const filters: any = {};
     if (this.filterDate) filters.date = this.filterDate;
@@ -56,13 +63,16 @@ export class AppointmentListComponent implements OnInit {
 
     this.appointmentService.getAppointments(filters).subscribe({
       next: (res) => {
-        this.appointments = res?.data || [];
+        const list = Array.isArray(res) ? res : (res?.data || []);
+        this.appointments = Array.isArray(list) ? list : [];
         this.loading = false;
+        this.cdr.markForCheck();
       },
       error: (err) => {
         console.warn('Could not load appointments', err);
         this.errorMessage = 'Backend endpoint GET /api/appointments is pending or unreachable.';
         this.loading = false;
+        this.cdr.markForCheck();
       }
     });
   }
@@ -75,19 +85,25 @@ export class AppointmentListComponent implements OnInit {
     this.appointmentService.updateStatus(appt.id, newStatus).subscribe({
       next: () => {
         appt.status = newStatus;
+        this.cdr.markForCheck();
       },
-      error: (err) => alert('Failed to update status. Backend API may be unreachable.')
+      error: (err) => {
+        alert('Failed to update status. Backend API may be unreachable.');
+        this.cdr.markForCheck();
+      }
     });
   }
 
   openCancelModal(appt: AppointmentResponse): void {
     this.cancellingAppt = appt;
     this.cancelReason = '';
+    this.cdr.markForCheck();
   }
 
   closeCancelModal(): void {
     this.cancellingAppt = null;
     this.cancelReason = '';
+    this.cdr.markForCheck();
   }
 
   confirmCancel(): void {
@@ -98,8 +114,12 @@ export class AppointmentListComponent implements OnInit {
           this.cancellingAppt.status = 'CANCELLED';
         }
         this.closeCancelModal();
+        this.cdr.markForCheck();
       },
-      error: (err) => alert('Failed to cancel appointment. Backend API may be unreachable.')
+      error: (err) => {
+        alert('Failed to cancel appointment. Backend API may be unreachable.');
+        this.cdr.markForCheck();
+      }
     });
   }
 
@@ -111,8 +131,12 @@ export class AppointmentListComponent implements OnInit {
       next: () => {
         appt.calendarEventAdded = true;
         alert('Calendar invite queued successfully.');
+        this.cdr.markForCheck();
       },
-      error: (err) => alert('Failed to queue calendar invite. Backend API may be unreachable.')
+      error: (err) => {
+        alert('Failed to queue calendar invite. Backend API may be unreachable.');
+        this.cdr.markForCheck();
+      }
     });
   }
 }

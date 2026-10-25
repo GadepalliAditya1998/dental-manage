@@ -1,0 +1,11 @@
+databaseChangeLog:
+  - changeSet:
+      id: 006-add-reason-to-appointments
+      author: system
+      changes:
+        - addColumn:
+            tableName: appointments
+            columns:
+              - column:
+                  name: reason
+                  type: TEXT

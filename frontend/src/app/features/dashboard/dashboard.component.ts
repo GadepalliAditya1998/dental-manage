@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { DashboardService } from '../../core/services/dashboard.service';
 import { AppointmentService } from '../../core/services/appointment.service';
@@ -22,9 +22,17 @@ export class DashboardComponent implements OnInit, OnDestroy {
   recentAppointments: AppointmentResponse[] = [];
   recentCalls: CallRecordResponse[] = [];
   loading = true;
+  metricsLoading = false;
   errorMessage = '';
 
   selectedCall: CallRecordResponse | null = null;
+
+  // Filter state: Day, Week, Month, Custom
+  selectedFilter: 'DAY' | 'WEEK' | 'MONTH' | 'CUSTOM' = 'DAY';
+  customStartDate = '';
+  customEndDate = '';
+  todayDate = new Date().toISOString().split('T')[0];
+  dateRangeLabel = 'Today';
 
   private wsSubs = new Subscription();
 
@@ -33,7 +41,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
     private appointmentService: AppointmentService,
     private callRecordService: CallRecordService,
     private wsService: WebSocketService,
-    private authService: AuthService
+    private authService: AuthService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   get isDoctor(): boolean {
@@ -46,30 +55,108 @@ export class DashboardComponent implements OnInit, OnDestroy {
     });
     this.contextUser = this.authService.getContextUser();
 
+    // Default custom range to past 7 days
+    const pastDate = new Date();
+    pastDate.setDate(pastDate.getDate() - 7);
+    this.customStartDate = pastDate.toISOString().split('T')[0];
+    this.customEndDate = this.todayDate;
+
+    this.updateDateRangeLabel();
     this.loadDashboardData();
     this.setupRealtimeListeners();
+  }
+
+  setFilter(filter: 'DAY' | 'WEEK' | 'MONTH' | 'CUSTOM'): void {
+    if (this.selectedFilter === filter) return;
+    this.selectedFilter = filter;
+    this.updateDateRangeLabel();
+    this.loadMetrics();
+  }
+
+  applyCustomFilter(): void {
+    if (this.customStartDate && this.customEndDate) {
+      if (this.customStartDate > this.customEndDate) {
+        const temp = this.customStartDate;
+        this.customStartDate = this.customEndDate;
+        this.customEndDate = temp;
+      }
+      this.updateDateRangeLabel();
+      this.loadMetrics();
+    }
+  }
+
+  updateDateRangeLabel(): void {
+    const today = new Date();
+    const options: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric', year: 'numeric' };
+
+    switch (this.selectedFilter) {
+      case 'DAY':
+        this.dateRangeLabel = `Today, ${today.toLocaleDateString('en-US', options)}`;
+        break;
+      case 'WEEK': {
+        const day = today.getDay();
+        const diffToMonday = today.getDate() - day + (day === 0 ? -6 : 1);
+        const monday = new Date(today.setDate(diffToMonday));
+        const sunday = new Date(monday);
+        sunday.setDate(monday.getDate() + 6);
+        this.dateRangeLabel = `This Week (${monday.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${sunday.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })})`;
+        break;
+      }
+      case 'MONTH':
+        this.dateRangeLabel = `This Month (${new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })})`;
+        break;
+      case 'CUSTOM':
+        if (this.customStartDate && this.customEndDate) {
+          this.dateRangeLabel = `${this.customStartDate} to ${this.customEndDate}`;
+        } else {
+          this.dateRangeLabel = 'Custom Range';
+        }
+        break;
+    }
   }
 
   loadDashboardData(): void {
     this.loading = true;
     this.errorMessage = '';
+    this.cdr.markForCheck();
 
-    // Load Metrics
-    this.dashboardService.getMetrics().subscribe({
+    this.loadMetrics(() => {
+      this.loading = false;
+      this.cdr.markForCheck();
+    });
+
+    this.loadAppointments();
+    this.loadRecentCalls();
+  }
+
+  loadMetrics(onComplete?: () => void): void {
+    this.metricsLoading = true;
+    this.cdr.markForCheck();
+    const doctorId = this.isDoctor && this.contextUser?.doctorId ? this.contextUser.doctorId : undefined;
+    const startDate = this.selectedFilter === 'CUSTOM' ? this.customStartDate : undefined;
+    const endDate = this.selectedFilter === 'CUSTOM' ? this.customEndDate : undefined;
+
+    this.dashboardService.getMetrics(this.selectedFilter, startDate, endDate, doctorId).subscribe({
       next: (res) => {
         if (res?.data) {
           this.metrics = res.data;
+          this.errorMessage = '';
         }
-        this.loading = false;
+        this.metricsLoading = false;
+        this.cdr.markForCheck();
+        if (onComplete) onComplete();
       },
       error: (err) => {
         console.warn('Dashboard metrics API unreachable:', err);
         this.errorMessage = 'Backend API is currently pending or unreachable. Waiting for backend connection.';
-        this.loading = false;
+        this.metricsLoading = false;
+        this.cdr.markForCheck();
+        if (onComplete) onComplete();
       }
     });
+  }
 
-    // Load Today's Appointments (scoped to doctor if doctor is logged in)
+  loadAppointments(): void {
     const today = new Date().toISOString().split('T')[0];
     const apptFilters: any = { date: today };
     if (this.isDoctor && this.contextUser?.doctorId) {
@@ -80,32 +167,42 @@ export class DashboardComponent implements OnInit, OnDestroy {
       next: (res) => {
         if (res?.data) {
           this.recentAppointments = res.data.slice(0, 10);
+          this.cdr.markForCheck();
         }
       },
-      error: (err) => console.warn('Appointments API unreachable:', err)
+      error: (err) => {
+        console.warn('Appointments API unreachable:', err);
+        this.cdr.markForCheck();
+      }
     });
+  }
 
-    // Load Recent Calls (only relevant for receptionist / general overview)
-    if (!this.isDoctor) {
-      this.callRecordService.getRecentCalls(5).subscribe({
-        next: (res) => {
-          if (res?.data) {
-            this.recentCalls = res.data;
-          }
-        },
-        error: (err) => console.warn('Calls API unreachable:', err)
-      });
-    }
+  loadRecentCalls(): void {
+    const doctorId = this.isDoctor && this.contextUser?.doctorId ? this.contextUser.doctorId : undefined;
+
+    this.callRecordService.getRecentCalls(5, doctorId).subscribe({
+      next: (res) => {
+        if (res?.data) {
+          this.recentCalls = res.data;
+          this.cdr.markForCheck();
+        }
+      },
+      error: (err) => {
+        console.warn('Calls API unreachable:', err);
+        this.cdr.markForCheck();
+      }
+    });
   }
 
   setupRealtimeListeners(): void {
     this.wsSubs.add(
       this.wsService.onCallUpdate().subscribe((call) => {
-        if (call && !this.isDoctor) {
+        if (call) {
           this.recentCalls.unshift(call);
           if (this.recentCalls.length > 5) this.recentCalls.pop();
           if (this.metrics) {
-            this.metrics.totalAiCalls++;
+            this.metrics.callsReceived = (this.metrics.callsReceived || 0) + 1;
+            this.metrics.totalAiCalls = (this.metrics.totalAiCalls || 0) + 1;
           }
         }
       })
@@ -116,6 +213,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
         if (appt) {
           this.recentAppointments.unshift(appt);
           if (this.recentAppointments.length > 10) this.recentAppointments.pop();
+          if (this.metrics) {
+            this.metrics.successfulBookings = (this.metrics.successfulBookings || 0) + 1;
+            if (appt.bookingSource === 'AI_AGENT' || (appt as any).callRecord) {
+              this.metrics.appointmentsBookedViaCallAgent = (this.metrics.appointmentsBookedViaCallAgent || 0) + 1;
+            }
+          }
         }
       })
     );

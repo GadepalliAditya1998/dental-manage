@@ -78,8 +78,10 @@
               <small class="text-muted">{{ appt.appointmentStart | date:'shortTime' }} - {{ appt.appointmentEnd | date:'shortTime' }}</small>
             </td>
             <td>
-              <div class="fw-semibold text-dark">{{ appt.patient.firstName }} {{ appt.patient.lastName }}</div>
-              <small class="text-muted"><i class="bi bi-telephone me-1"></i>{{ appt.patient.phoneNumber }}</small>
+              <a [routerLink]="['/patients', appt.patient.id]" class="fw-semibold text-dark text-decoration-none hover-teal" title="View Patient Profile">
+                <i class="bi bi-person me-1 text-teal"></i>{{ appt.patient.firstName }} {{ appt.patient.lastName }}
+              </a>
+              <div><small class="text-muted"><i class="bi bi-telephone me-1"></i>{{ appt.patient.phoneNumber }}</small></div>
             </td>
             <td>
               <div class="fw-semibold">Dr. {{ appt.doctor.firstName }} {{ appt.doctor.lastName }}</div>

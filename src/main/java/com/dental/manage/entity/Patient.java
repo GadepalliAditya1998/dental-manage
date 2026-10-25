@@ -29,6 +29,9 @@ public class Patient extends BaseEntity {
     @Column(name = "clinic_id")
     private Long clinicId;
 
+    @Column(name = "patient_id", unique = true, length = 64)
+    private String patientId;
+
     @Column(name = "first_name", nullable = false, length = 100)
     private String firstName;
 
@@ -47,6 +50,10 @@ public class Patient extends BaseEntity {
     @Column(name = "is_new_lead")
     @Builder.Default
     private Boolean isNewLead = true;
+
+    @Column(name = "whatsapp_opt_out")
+    @Builder.Default
+    private Boolean whatsappOptOut = false;
 
     @OneToMany(mappedBy = "patient")
     @Builder.Default

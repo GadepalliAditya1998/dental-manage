@@ -33,3 +33,9 @@ build/
 .vscode/
 
 graphify-out/
+
+# Google & Service Account Credentials
+*credentials*.json
+service-account*.json
+*.pem
+*.p12

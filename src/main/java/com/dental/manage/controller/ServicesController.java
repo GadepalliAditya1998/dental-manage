@@ -1,5 +1,6 @@
 package com.dental.manage.controller;
 
+import com.dental.manage.context.ClinicRequestContext;
 import com.dental.manage.dto.request.ServiceRequest;
 import com.dental.manage.dto.response.ApiResponse;
 import com.dental.manage.dto.response.ServiceResponse;
@@ -48,7 +49,7 @@ public class ServicesController {
             @PathVariable(name = "clinicId", required = false) Long pathClinicId,
             @RequestParam(name = "clinicId", required = false) Long queryClinicId,
             @RequestParam(name = "activeOnly", required = false, defaultValue = "true") boolean activeOnly) {
-        Long clinicId = pathClinicId != null ? pathClinicId : queryClinicId;
+        Long clinicId = pathClinicId != null ? pathClinicId : (queryClinicId != null ? queryClinicId : ClinicRequestContext.getClinicId());
         log.info("Request received to fetch clinic services (clinicId={}, activeOnly={})", clinicId, activeOnly);
         List<ServiceResponse> services = activeOnly
                 ? servicesService.getActiveServices(clinicId)
@@ -67,7 +68,7 @@ public class ServicesController {
     public ResponseEntity<ApiResponse<List<ServiceResponse>>> getActiveServices(
             @PathVariable(name = "clinicId", required = false) Long pathClinicId,
             @RequestParam(name = "clinicId", required = false) Long queryClinicId) {
-        Long clinicId = pathClinicId != null ? pathClinicId : queryClinicId;
+        Long clinicId = pathClinicId != null ? pathClinicId : (queryClinicId != null ? queryClinicId : ClinicRequestContext.getClinicId());
         log.info("Request received to fetch active clinic services (clinicId={})", clinicId);
         List<ServiceResponse> services = servicesService.getActiveServices(clinicId);
         return ResponseEntity.ok(ApiResponse.success("Active services fetched successfully", services));

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { PatientService } from '../../../core/services/patient.service';
@@ -21,7 +21,8 @@ export class PatientFormComponent implements OnInit {
     private fb: FormBuilder,
     private patientService: PatientService,
     private route: ActivatedRoute,
-    private router: Router
+    private router: Router,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -38,24 +39,31 @@ export class PatientFormComponent implements OnInit {
     this.patientForm = this.fb.group({
       firstName: ['', [Validators.required, Validators.minLength(2)]],
       lastName: [''],
-      email: ['', [Validators.email]],
-      phoneNumber: ['', [Validators.required, Validators.pattern(/^[+]?[0-9\s-]{7,15}$/)]]
+      email: ['', [Validators.required, Validators.email]],
+      phoneNumber: ['', [Validators.required, Validators.pattern(/^[+]?[0-9\s-]{7,15}$/)]],
+      dateOfBirth: ['', [Validators.required]]
     });
   }
 
   loadPatientData(id: number): void {
     this.patientService.getPatientById(id).subscribe({
       next: (res) => {
-        if (res?.data) {
+        const data = res?.data || (res as any);
+        if (data) {
           this.patientForm.patchValue({
-            firstName: res.data.firstName,
-            lastName: res.data.lastName,
-            email: res.data.email,
-            phoneNumber: res.data.phoneNumber
+            firstName: data.firstName || '',
+            lastName: data.lastName || '',
+            email: data.email || '',
+            phoneNumber: data.phoneNumber || '',
+            dateOfBirth: data.dateOfBirth || ''
           });
+          this.cdr.markForCheck();
         }
       },
-      error: (err) => console.warn('Could not load patient details', err)
+      error: (err) => {
+        console.warn('Could not load patient details', err);
+        this.cdr.markForCheck();
+      }
     });
   }
 
@@ -68,6 +76,7 @@ export class PatientFormComponent implements OnInit {
     this.submitting = true;
     this.errorMsg = '';
     this.successMsg = '';
+    this.cdr.markForCheck();
 
     const payload = this.patientForm.value;
 
@@ -76,11 +85,13 @@ export class PatientFormComponent implements OnInit {
         next: () => {
           this.submitting = false;
           this.successMsg = 'Patient updated successfully!';
+          this.cdr.markForCheck();
           setTimeout(() => this.router.navigate(['/patients']), 1000);
         },
         error: (err) => {
           this.submitting = false;
           this.errorMsg = 'Failed to update patient: Backend API is pending or unreachable.';
+          this.cdr.markForCheck();
         }
       });
     } else {
@@ -88,11 +99,13 @@ export class PatientFormComponent implements OnInit {
         next: () => {
           this.submitting = false;
           this.successMsg = 'Patient registered successfully!';
+          this.cdr.markForCheck();
           setTimeout(() => this.router.navigate(['/patients']), 1000);
         },
         error: (err) => {
           this.submitting = false;
           this.errorMsg = 'Failed to create patient: Backend POST /api/patients is pending or unreachable.';
+          this.cdr.markForCheck();
         }
       });
     }

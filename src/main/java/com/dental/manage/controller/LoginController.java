@@ -71,12 +71,23 @@ public class LoginController {
 
         String username = jwtTokenService.extractUsername(token);
         String role = jwtTokenService.extractRole(token);
+        Map<String, Object> claims = jwtTokenService.extractAllClaims(token);
 
-        Map<String, Object> data = Map.of(
-                "valid", true,
-                "username", username != null ? username : "",
-                "role", role != null ? role : ""
-        );
+        Map<String, Object> data = new java.util.HashMap<>();
+        data.put("valid", true);
+        data.put("username", username != null ? username : "");
+        data.put("role", role != null ? role : "");
+        if (claims != null) {
+            if (claims.get("doctorId") != null) {
+                data.put("doctorId", claims.get("doctorId"));
+            }
+            if (claims.get("clinicId") != null) {
+                data.put("clinicId", claims.get("clinicId"));
+            }
+            if (claims.get("name") != null) {
+                data.put("fullName", claims.get("name"));
+            }
+        }
 
         return ResponseEntity.ok(ApiResponse.success("Token is valid", data));
     }

@@ -1,0 +1,55 @@
+databaseChangeLog:
+  # ── Add booking_source column to appointments table ─────────────────────────
+  - changeSet:
+      id: 008-add-booking-source-to-appointments
+      author: system
+      changes:
+        - addColumn:
+            tableName: appointments
+            columns:
+              - column:
+                  name: booking_source
+                  type: VARCHAR(30)
+                  defaultValue: "MANUAL"
+
+  # ── Backfill existing appointments based on call_record_id presence ─────────
+  - changeSet:
+      id: 008-backfill-booking-source
+      author: system
+      changes:
+        # Appointments linked to an AI call record were booked by AI_AGENT
+        - update:
+            tableName: appointments
+            columns:
+              - column:
+                  name: booking_source
+                  value: "AI_AGENT"
+            where: "call_record_id IS NOT NULL"
+        # Remaining appointments default to MANUAL
+        - update:
+            tableName: appointments
+            columns:
+              - column:
+                  name: booking_source
+                  value: "MANUAL"
+            where: "booking_source IS NULL"
+
+  # ── Index for fast querying and filtering by booking source ─────────────────
+  - changeSet:
+      id: 008-create-booking-source-indexes
+      author: system
+      changes:
+        - createIndex:
+            tableName: appointments
+            indexName: idx_appointments_booking_source
+            columns:
+              - column:
+                  name: booking_source
+        - createIndex:
+            tableName: appointments
+            indexName: idx_appointments_clinic_booking_source
+            columns:
+              - column:
+                  name: clinic_id
+              - column:
+                  name: booking_source

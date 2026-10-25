@@ -1,0 +1,43 @@
+databaseChangeLog:
+  - changeSet:
+      id: 012-sync-doctors-from-users
+      author: system
+      changes:
+        - sql:
+            sql: |
+              INSERT INTO doctors (id, clinic_id, first_name, last_name, specialization, email, phone_number, is_active, is_deleted, created_by, created_on, modified_by, modified_on)
+              SELECT 
+                u.id,
+                COALESCE(u.clinic_id, 1),
+                CASE 
+                  WHEN POSITION(' ' IN TRIM(COALESCE(u.full_name, ''))) > 0 
+                  THEN SUBSTRING(TRIM(u.full_name) FROM 1 FOR POSITION(' ' IN TRIM(u.full_name)) - 1)
+                  ELSE COALESCE(NULLIF(TRIM(u.full_name), ''), u.username)
+                END AS first_name,
+                CASE 
+                  WHEN POSITION(' ' IN TRIM(COALESCE(u.full_name, ''))) > 0 
+                  THEN SUBSTRING(TRIM(u.full_name) FROM POSITION(' ' IN TRIM(u.full_name)) + 1)
+                  ELSE 'Doctor'
+                END AS last_name,
+                'General Dentistry',
+                u.email,
+                u.phone_number,
+                COALESCE(u.is_active, true),
+                COALESCE(u.is_deleted, false),
+                'SYSTEM',
+                u.created_on,
+                'SYSTEM',
+                u.modified_on
+              FROM users u
+              WHERE u.role = 'DOCTOR'
+              ON CONFLICT (id) DO UPDATE SET
+                clinic_id = EXCLUDED.clinic_id,
+                first_name = EXCLUDED.first_name,
+                last_name = EXCLUDED.last_name,
+                email = EXCLUDED.email,
+                phone_number = EXCLUDED.phone_number,
+                is_active = EXCLUDED.is_active,
+                is_deleted = EXCLUDED.is_deleted,
+                modified_on = now();
+
+              SELECT setval('doctors_id_seq', GREATEST(COALESCE((SELECT MAX(id) FROM doctors), 1), 1));

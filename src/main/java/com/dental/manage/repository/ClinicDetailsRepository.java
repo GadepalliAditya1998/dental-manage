@@ -36,6 +36,16 @@ public interface ClinicDetailsRepository extends JpaRepository<ClinicDetails, Lo
     boolean existsByClinicIdAndIsDeletedFalse(Long clinicId);
 
     /**
+     * Find active clinic details by API key for clinic-wide external integrations (e.g. Retell AI agent).
+     */
+    Optional<ClinicDetails> findByApiKeyAndIsDeletedFalse(String apiKey);
+
+    /**
+     * Check if active clinic details exist with the given API key.
+     */
+    boolean existsByApiKeyAndIsDeletedFalse(String apiKey);
+
+    /**
      * Find all non-deleted clinics.
      */
     List<ClinicDetails> findByIsDeletedFalse();

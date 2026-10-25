@@ -51,4 +51,7 @@ public class ClinicDetails extends BaseEntity {
 
     @Column(name = "timezone", length = 50)
     private String timezone;
+
+    @Column(name = "api_key", length = 128)
+    private String apiKey;
 }

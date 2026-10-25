@@ -1,0 +1,25 @@
+databaseChangeLog:
+  # ── Add whatsapp_opt_out column to patients table ─────────────────────────
+  - changeSet:
+      id: 009-add-whatsapp-opt-out-to-patients
+      author: system
+      changes:
+        - addColumn:
+            tableName: patients
+            columns:
+              - column:
+                  name: whatsapp_opt_out
+                  type: BOOLEAN
+                  defaultValueBoolean: false
+
+  # ── Index for fast querying on whatsapp_opt_out ───────────────────────────
+  - changeSet:
+      id: 009-create-whatsapp-opt-out-index
+      author: system
+      changes:
+        - createIndex:
+            tableName: patients
+            indexName: idx_patients_whatsapp_opt_out
+            columns:
+              - column:
+                  name: whatsapp_opt_out

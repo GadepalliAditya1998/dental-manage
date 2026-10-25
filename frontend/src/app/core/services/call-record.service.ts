@@ -26,8 +26,11 @@ export class CallRecordService {
     return this.http.get<ApiResponse<CallRecordResponse[]>>(this.baseUrl, { params });
   }
 
-  getRecentCalls(limit: number = 10): Observable<ApiResponse<CallRecordResponse[]>> {
-    const params = new HttpParams().set('limit', limit.toString());
+  getRecentCalls(limit: number = 10, doctorId?: number): Observable<ApiResponse<CallRecordResponse[]>> {
+    let params = new HttpParams().set('limit', limit.toString());
+    if (doctorId !== undefined && doctorId !== null) {
+      params = params.set('doctorId', doctorId.toString());
+    }
     return this.http.get<ApiResponse<CallRecordResponse[]>>(`${this.baseUrl}/recent`, { params });
   }
 

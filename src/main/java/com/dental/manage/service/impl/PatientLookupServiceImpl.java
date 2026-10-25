@@ -6,6 +6,7 @@ import com.dental.manage.entity.User;
 import com.dental.manage.exception.ResourceNotFoundException;
 import com.dental.manage.repository.UserRepository;
 import com.dental.manage.service.PatientLookupService;
+import com.dental.manage.util.PatientIdGenerator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -17,7 +18,7 @@ import java.util.List;
 /**
  * Implementation of PatientLookupService.
  * Restricts queries strictly to PATIENT role, ensuring DOCTOR and RECEPTIONIST roles are not returned.
- * Requires phone number, full name, and date of birth.
+ * Supports lookup by unique string patientId OR (mobile number + date of birth).
  */
 @Service
 @RequiredArgsConstructor
@@ -31,26 +32,39 @@ public class PatientLookupServiceImpl implements PatientLookupService {
     public PatientLookupResponse lookupPatient(PatientLookupRequest request) {
         validateRequest(request);
 
-        log.info("Performing patient lookup with phone: '{}', fullName: '{}', dob: '{}', clinicId: '{}'",
-                request.getPhoneNumber(), request.getFullName(), request.getDateOfBirth(), request.getClinicId());
+        Long effectiveClinicId = request.getClinicId();
+        List<User> patients;
 
-        List<User> patients = userRepository.findPatientsForLookup(
-                request.getPhoneNumber().trim(),
-                request.getFullName().trim(),
-                request.getDateOfBirth(),
-                request.getClinicId()
-        );
+        if (request.getPatientId() != null && !request.getPatientId().trim().isEmpty()) {
+            String patientId = request.getPatientId().trim();
+            if (effectiveClinicId == null) {
+                effectiveClinicId = PatientIdGenerator.extractClinicId(patientId);
+            }
+            log.info("Performing patient lookup with patientId: '{}', clinicId: '{}'", patientId, effectiveClinicId);
+            patients = userRepository.findPatientsByPatientId(patientId, effectiveClinicId);
 
-        if (patients.isEmpty()) {
-            log.warn("No patient found with phone: '{}', fullName: '{}', dob: '{}'",
-                    request.getPhoneNumber(), request.getFullName(), request.getDateOfBirth());
-            throw new ResourceNotFoundException(
-                    "Patient not found with the provided phone number, full name, and date of birth");
+            if (patients.isEmpty()) {
+                log.warn("No patient found with patientId: '{}', clinicId: '{}'", patientId, effectiveClinicId);
+                throw new ResourceNotFoundException("Patient not found with the provided patient ID: " + patientId);
+            }
+        } else {
+            String phone = request.getPhoneNumber().trim();
+            LocalDate dob = request.getDateOfBirth();
+            log.info("Performing patient lookup with phone: '{}', dob: '{}', clinicId: '{}'",
+                    phone, dob, effectiveClinicId);
+
+            patients = userRepository.findPatientsByPhoneAndDob(phone, dob, effectiveClinicId);
+
+            if (patients.isEmpty()) {
+                log.warn("No patient found with phone: '{}', dob: '{}'", phone, dob);
+                throw new ResourceNotFoundException(
+                        "Patient not found with the provided phone number and date of birth");
+            }
         }
 
         User patient = patients.get(0);
-        log.info("Patient found successfully: id={}, fullName={}, role={}",
-                patient.getId(), patient.getFullName(), patient.getRole());
+        log.info("Patient found successfully: id={}, patientId={}, fullName={}, role={}",
+                patient.getId(), patient.getPatientId(), patient.getFullName(), patient.getRole());
 
         return mapToResponse(patient);
     }
@@ -59,13 +73,22 @@ public class PatientLookupServiceImpl implements PatientLookupService {
         if (request == null) {
             throw new IllegalArgumentException("Patient lookup request cannot be null");
         }
-        if (request.getPhoneNumber() == null || request.getPhoneNumber().trim().isEmpty()) {
+
+        boolean hasPatientId = request.getPatientId() != null && !request.getPatientId().trim().isEmpty();
+        boolean hasPhone = request.getPhoneNumber() != null && !request.getPhoneNumber().trim().isEmpty();
+        boolean hasDob = request.getDateOfBirth() != null;
+
+        if (hasPatientId) {
+            return;
+        }
+
+        if (!hasPhone && !hasDob) {
+            throw new IllegalArgumentException("Either patientId or both mobile number and date of birth must be provided");
+        }
+        if (!hasPhone) {
             throw new IllegalArgumentException("Phone number is mandatory");
         }
-        if (request.getFullName() == null || request.getFullName().trim().isEmpty()) {
-            throw new IllegalArgumentException("Full name is mandatory");
-        }
-        if (request.getDateOfBirth() == null) {
+        if (!hasDob) {
             throw new IllegalArgumentException("Date of birth is mandatory");
         }
         if (request.getDateOfBirth().isAfter(LocalDate.now())) {
@@ -84,8 +107,13 @@ public class PatientLookupServiceImpl implements PatientLookupService {
             lastName = parts.length > 1 ? parts[1] : "";
         }
 
+        String effectivePatientId = user.getPatientId() != null && !user.getPatientId().isBlank()
+                ? user.getPatientId()
+                : (user.getClinicId() != null ? "PAT-" + user.getClinicId() + "-" + user.getId() : "PAT-1-" + user.getId());
+
         return PatientLookupResponse.builder()
                 .id(user.getId())
+                .patientId(effectivePatientId)
                 .clinicId(user.getClinicId())
                 .username(user.getUsername())
                 .fullName(user.getFullName())

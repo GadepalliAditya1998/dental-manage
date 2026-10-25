@@ -1,6 +1,7 @@
 package com.dental.manage.service;
 
 import com.dental.manage.dto.request.ClinicSettingsRequest;
+import com.dental.manage.dto.response.ApiKeyResponse;
 import com.dental.manage.dto.response.ClinicSettingsResponse;
 import com.dental.manage.dto.response.ClinicWorkingHoursResponse;
 import com.dental.manage.entity.ClinicDetails;
@@ -36,6 +37,9 @@ class ClinicDetailsServiceImplTest {
 
     @Mock
     private ClinicDetailsMapper clinicDetailsMapper;
+
+    @Mock
+    private ApiKeyService apiKeyService;
 
     @InjectMocks
     private ClinicDetailsServiceImpl clinicDetailsService;
@@ -195,5 +199,45 @@ class ClinicDetailsServiceImplTest {
         assertThat(result.getClinicName()).isEqualTo("Updated Clinic");
         verify(clinicDetailsMapper).updateEntityFromRequest(request, clinicDetails);
         verify(clinicDetailsRepository).save(clinicDetails);
+    }
+
+    @Test
+    @DisplayName("getApiKey should delegate to ApiKeyService")
+    void getApiKey_shouldDelegateToApiKeyService() {
+        ApiKeyResponse mockResponse = ApiKeyResponse.builder()
+                .clinicId(1L)
+                .clinicName("Smile Dental Clinic")
+                .apiKey("retell_live_clinic_1_sk_sample_key_2026")
+                .agentType("RETELL_AGENT")
+                .isActive(true)
+                .build();
+
+        when(apiKeyService.getActiveRetellApiKey(1L)).thenReturn(mockResponse);
+
+        ApiKeyResponse result = clinicDetailsService.getApiKey(1L);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getApiKey()).isEqualTo("retell_live_clinic_1_sk_sample_key_2026");
+        verify(apiKeyService).getActiveRetellApiKey(1L);
+    }
+
+    @Test
+    @DisplayName("regenerateApiKey should delegate to ApiKeyService")
+    void regenerateApiKey_shouldDelegateToApiKeyService() {
+        ApiKeyResponse mockResponse = ApiKeyResponse.builder()
+                .clinicId(1L)
+                .clinicName("Smile Dental Clinic")
+                .apiKey("retell_live_new_key_12345")
+                .agentType("RETELL_AGENT")
+                .isActive(true)
+                .build();
+
+        when(apiKeyService.createOrRegenerateRetellApiKey(1L, null)).thenReturn(mockResponse);
+
+        ApiKeyResponse result = clinicDetailsService.regenerateApiKey(1L);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getApiKey()).isEqualTo("retell_live_new_key_12345");
+        verify(apiKeyService).createOrRegenerateRetellApiKey(1L, null);
     }
 }

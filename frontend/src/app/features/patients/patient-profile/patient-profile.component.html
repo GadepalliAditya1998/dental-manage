@@ -1,0 +1,663 @@
+<div class="container-fluid py-3">
+  <!-- Top Breadcrumb & Header -->
+  <div class="d-flex flex-wrap align-items-center justify-content-between mb-4 gap-2">
+    <div>
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-1">
+          <li class="breadcrumb-item"><a routerLink="/patients" class="text-decoration-none text-muted">Patients Directory</a></li>
+          <li class="breadcrumb-item active text-teal fw-semibold" aria-current="page">Patient Profile</li>
+        </ol>
+      </nav>
+      <div class="d-flex align-items-center gap-2 flex-wrap">
+        <h2 class="fw-bold mb-0 text-dark">
+          {{ patient ? (patient.firstName + ' ' + (patient.lastName || '')) : 'Patient Profile' }}
+        </h2>
+        <span *ngIf="patient?.patientId" class="badge bg-light text-secondary border font-monospace">
+          {{ patient?.patientId }}
+        </span>
+        <span *ngIf="patient && patient.isNewLead" class="badge bg-primary-subtle text-primary">
+          <i class="bi bi-stars me-1"></i> New Lead (AI)
+        </span>
+        <span *ngIf="patient && !patient.isNewLead" class="badge bg-success-subtle text-success">
+          <i class="bi bi-check-circle me-1"></i> Established Patient
+        </span>
+        <span *ngIf="patient?.whatsappOptOut" class="badge bg-warning-subtle text-warning-emphasis" title="Patient has opted out of WhatsApp reminders">
+          <i class="bi bi-bell-slash me-1"></i> WhatsApp Opted-Out
+        </span>
+        <span *ngIf="patient && !patient.whatsappOptOut" class="badge bg-info-subtle text-info-emphasis" title="Patient receives WhatsApp appointment reminders">
+          <i class="bi bi-whatsapp me-1"></i> WhatsApp Active
+        </span>
+      </div>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+      <a routerLink="/patients" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left me-1"></i> Back to Patients
+      </a>
+      <a [routerLink]="['/appointments/new']" [queryParams]="{ patientId: patientId }" class="btn btn-primary btn-sm bg-teal-gradient border-0 shadow-sm">
+        <i class="bi bi-calendar-plus me-1"></i> Book Appointment
+      </a>
+    </div>
+  </div>
+
+  <!-- Global Alerts -->
+  <div *ngIf="successMessage" class="alert alert-success alert-dismissible fade show border-0 shadow-sm mb-4" role="alert">
+    <i class="bi bi-check-circle-fill me-2 fs-5 align-middle"></i>
+    <span>{{ successMessage }}</span>
+    <button type="button" class="btn-close" (click)="successMessage = ''" aria-label="Close"></button>
+  </div>
+
+  <div *ngIf="errorMessage" class="alert alert-danger alert-dismissible fade show border-0 shadow-sm mb-4" role="alert">
+    <i class="bi bi-exclamation-triangle-fill me-2 fs-5 align-middle"></i>
+    <span>{{ errorMessage }}</span>
+    <button type="button" class="btn-close" (click)="errorMessage = ''" aria-label="Close"></button>
+  </div>
+
+  <!-- Loading State -->
+  <app-loading-spinner *ngIf="loadingPatient && !patient" message="Loading patient profile..."></app-loading-spinner>
+
+  <ng-container *ngIf="patient">
+    <!-- Stat Cards Overview -->
+    <div class="row g-3 mb-4">
+      <div class="col-6 col-md-3">
+        <div class="card card-custom p-3 border-0 h-100 cursor-pointer stat-card"
+             (click)="setMainTab('appointments'); setTab('upcoming')"
+             role="button"
+             title="View upcoming appointments">
+          <div class="d-flex align-items-center">
+            <div class="rounded-circle bg-teal-subtle text-teal p-3 me-3 d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+              <i class="bi bi-calendar-check fs-4"></i>
+            </div>
+            <div>
+              <div class="small text-muted fw-semibold">Upcoming</div>
+              <div class="fs-4 fw-bold text-dark">{{ upcomingAppointments.length }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="card card-custom p-3 border-0 h-100 cursor-pointer stat-card"
+             (click)="setMainTab('appointments'); setTab('past')"
+             role="button"
+             title="View past visits">
+          <div class="d-flex align-items-center">
+            <div class="rounded-circle bg-secondary-subtle text-secondary p-3 me-3 d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+              <i class="bi bi-clock-history fs-4"></i>
+            </div>
+            <div>
+              <div class="small text-muted fw-semibold">Past Visits</div>
+              <div class="fs-4 fw-bold text-dark">{{ pastAppointments.length }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="card card-custom p-3 border-0 h-100 cursor-pointer stat-card"
+             (click)="setMainTab('appointments'); setTab('all')"
+             role="button"
+             title="View all appointments">
+          <div class="d-flex align-items-center">
+            <div class="rounded-circle bg-primary-subtle text-primary p-3 me-3 d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+              <i class="bi bi-calendar2-range fs-4"></i>
+            </div>
+            <div>
+              <div class="small text-muted fw-semibold">Total Bookings</div>
+              <div class="fs-4 fw-bold text-dark">{{ allAppointments.length }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="card card-custom p-3 border-0 h-100 cursor-pointer stat-card"
+             (click)="setMainTab('appointments'); setTab('all')"
+             role="button"
+             title="View AI voice call bookings">
+          <div class="d-flex align-items-center">
+            <div class="rounded-circle bg-success-subtle text-success p-3 me-3 d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+              <i class="bi bi-telephone-inbound fs-4"></i>
+            </div>
+            <div>
+              <div class="small text-muted fw-semibold">Call Bookings</div>
+              <div class="fs-4 fw-bold text-dark">{{ allAppointments.filter(isBookedFromCall).length }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Navigation Tabs (Show One View at a Time) -->
+    <div class="border-bottom mb-4">
+      <ul class="nav nav-tabs main-tabs border-0 gap-2">
+        <li class="nav-item">
+          <button type="button"
+                  class="nav-link"
+                  [class.active]="activeMainTab === 'profile'"
+                  (click)="setMainTab('profile')">
+            <i class="bi bi-person-gear me-2"></i>Profile Settings
+          </button>
+        </li>
+        <li class="nav-item">
+          <button type="button"
+                  class="nav-link"
+                  [class.active]="activeMainTab === 'appointments'"
+                  (click)="setMainTab('appointments')">
+            <i class="bi bi-calendar3 me-2"></i>Appointments & Visits
+            <span class="badge rounded-pill ms-2" [ngClass]="activeMainTab === 'appointments' ? 'bg-teal text-white' : 'bg-light text-secondary border'">
+              {{ allAppointments.length }}
+            </span>
+          </button>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Tab View 1: Profile & Settings -->
+    <div *ngIf="activeMainTab === 'profile'">
+      <div class="card card-custom border-0 shadow-sm">
+        <div class="card-header bg-white border-bottom py-3">
+          <div class="d-flex align-items-center justify-content-between">
+            <div>
+              <h5 class="fw-bold mb-0 text-dark">
+                <i class="bi bi-sliders me-2 text-teal"></i> Patient Profile & Settings
+              </h5>
+              <p class="text-muted small mb-0 mt-1">Manage contact information, communication channels, and account classification</p>
+            </div>
+            <span class="badge bg-light text-muted border px-3 py-2">ID #{{ patient.id }}</span>
+          </div>
+        </div>
+
+        <div class="card-body p-4">
+          <form [formGroup]="settingsForm" (ngSubmit)="saveSettings()">
+            <div class="row g-4">
+              <!-- Left Column: Personal Information -->
+              <div class="col-12 col-lg-6">
+                <h6 class="fw-bold text-dark border-bottom pb-2 mb-3">
+                  <i class="bi bi-person-vcard text-teal me-2"></i>Personal Details
+                </h6>
+
+                <div class="row g-3 mb-3">
+                  <div class="col-sm-6">
+                    <label class="form-label small fw-semibold text-muted">First Name <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" formControlName="firstName"
+                           [class.is-invalid]="settingsForm.get('firstName')?.touched && settingsForm.get('firstName')?.invalid">
+                    <div class="invalid-feedback">First name is required.</div>
+                  </div>
+                  <div class="col-sm-6">
+                    <label class="form-label small fw-semibold text-muted">Last Name</label>
+                    <input type="text" class="form-control" formControlName="lastName">
+                  </div>
+                </div>
+
+                <div class="mb-3">
+                  <label class="form-label small fw-semibold text-muted">Phone Number <span class="text-danger">*</span></label>
+                  <div class="input-group">
+                    <span class="input-group-text bg-light text-muted"><i class="bi bi-telephone"></i></span>
+                    <input type="text" class="form-control" formControlName="phoneNumber"
+                           [class.is-invalid]="settingsForm.get('phoneNumber')?.touched && settingsForm.get('phoneNumber')?.invalid">
+                  </div>
+                  <div class="invalid-feedback d-block" *ngIf="settingsForm.get('phoneNumber')?.touched && settingsForm.get('phoneNumber')?.invalid">
+                    Phone number is required.
+                  </div>
+                </div>
+
+                <div class="mb-3">
+                  <label class="form-label small fw-semibold text-muted">Email Address <span class="text-danger">*</span></label>
+                  <div class="input-group">
+                    <span class="input-group-text bg-light text-muted"><i class="bi bi-envelope"></i></span>
+                    <input type="email" class="form-control" formControlName="email"
+                           [class.is-invalid]="settingsForm.get('email')?.touched && settingsForm.get('email')?.invalid">
+                  </div>
+                  <div class="invalid-feedback d-block" *ngIf="settingsForm.get('email')?.touched && settingsForm.get('email')?.invalid">
+                    Please enter a valid email.
+                  </div>
+                </div>
+
+                <div class="mb-3">
+                  <label class="form-label small fw-semibold text-muted">Date of Birth</label>
+                  <div class="input-group">
+                    <span class="input-group-text bg-light text-muted"><i class="bi bi-calendar"></i></span>
+                    <input type="date" class="form-control" formControlName="dateOfBirth">
+                  </div>
+                </div>
+              </div>
+
+              <!-- Right Column: Preferences, Lead Classification & Record Details -->
+              <div class="col-12 col-lg-6">
+                <h6 class="fw-bold text-dark border-bottom pb-2 mb-3">
+                  <i class="bi bi-gear-wide-connected text-teal me-2"></i>Notification & Lead Settings
+                </h6>
+
+                <!-- WhatsApp Opt-Out Setting -->
+                <div class="p-3 bg-light rounded border mb-3">
+                  <div class="form-check form-switch d-flex align-items-center justify-content-between p-0 mb-1">
+                    <label class="form-check-label fw-semibold text-dark cursor-pointer" for="whatsappOptOutSwitch">
+                      <i class="bi bi-whatsapp text-success me-1"></i> WhatsApp Reminders
+                    </label>
+                    <input class="form-check-input ms-auto" type="checkbox" role="switch" id="whatsappOptOutSwitch"
+                           [checked]="!settingsForm.get('whatsappOptOut')?.value"
+                           (change)="settingsForm.get('whatsappOptOut')?.setValue(!settingsForm.get('whatsappOptOut')?.value)">
+                  </div>
+                  <p class="small text-muted mb-0">
+                    <span *ngIf="!settingsForm.get('whatsappOptOut')?.value" class="text-success fw-semibold">
+                      <i class="bi bi-check-circle me-1"></i> Enabled:
+                    </span>
+                    <span *ngIf="settingsForm.get('whatsappOptOut')?.value" class="text-danger fw-semibold">
+                      <i class="bi bi-dash-circle me-1"></i> Disabled (Opted Out):
+                    </span>
+                    Automated 24h WhatsApp appointment reminder alerts & confirmation requests will be sent to this patient.
+                  </p>
+                </div>
+
+                <!-- New Lead Status Setting -->
+                <div class="p-3 bg-light rounded border mb-3">
+                  <div class="form-check form-switch d-flex align-items-center justify-content-between p-0 mb-1">
+                    <label class="form-check-label fw-semibold text-dark cursor-pointer" for="isNewLeadSwitch">
+                      <i class="bi bi-person-badge text-primary me-1"></i> Inbound Lead Classification
+                    </label>
+                    <input class="form-check-input ms-auto" type="checkbox" role="switch" id="isNewLeadSwitch"
+                           formControlName="isNewLead">
+                  </div>
+                  <p class="small text-muted mb-0">
+                    Mark patient as a new lead originating from AI voice inbound calls. Uncheck when consultation has been finalized.
+                  </p>
+                </div>
+
+                <!-- Patient Metadata Read-Only -->
+                <div class="small text-muted bg-light p-3 rounded border">
+                  <div class="fw-semibold text-dark mb-2">
+                    <i class="bi bi-shield-check text-teal me-1"></i> Account Record Info
+                  </div>
+                  <div class="d-flex justify-content-between py-1 border-bottom">
+                    <span>Unique Code:</span>
+                    <span class="fw-semibold text-dark font-monospace">{{ patient.patientId || '—' }}</span>
+                  </div>
+                  <div class="d-flex justify-content-between py-1 border-bottom">
+                    <span>Registered:</span>
+                    <span class="fw-semibold text-dark">{{ (patient.createdOn | date:'medium') || '—' }}</span>
+                  </div>
+                  <div class="d-flex justify-content-between py-1">
+                    <span>Last Modified:</span>
+                    <span class="fw-semibold text-dark">{{ (patient.modifiedOn | date:'medium') || '—' }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <hr class="text-muted my-4">
+
+            <!-- Action Buttons -->
+            <div class="d-flex justify-content-end gap-2">
+              <button type="button" class="btn btn-outline-secondary px-4" (click)="resetSettings()" [disabled]="savingSettings">
+                Reset
+              </button>
+              <button type="submit" class="btn btn-primary bg-teal-gradient border-0 px-4" [disabled]="savingSettings || settingsForm.invalid">
+                <span *ngIf="savingSettings" class="spinner-border spinner-border-sm me-1" role="status"></span>
+                <i *ngIf="!savingSettings" class="bi bi-check2-circle me-1"></i>
+                Save Settings
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab View 2: Appointments & Visits -->
+    <div *ngIf="activeMainTab === 'appointments'">
+      <div class="card card-custom border-0 shadow-sm">
+        <div class="card-header bg-white border-bottom py-3">
+          <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
+            <div>
+              <h5 class="fw-bold mb-0 text-dark">
+                <i class="bi bi-calendar3 me-2 text-teal"></i> Patient Appointments
+              </h5>
+              <p class="text-muted small mb-0 mt-1">Review scheduled consultations, completed visits, and AI voice recordings</p>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+              <a [routerLink]="['/appointments/new']" [queryParams]="{ patientId: patientId }" class="btn btn-sm btn-primary bg-teal-gradient border-0">
+                <i class="bi bi-plus-lg me-1"></i> Book Appointment
+              </a>
+              <button class="btn btn-sm btn-outline-secondary" (click)="loadAppointments()" [disabled]="loadingAppointments" title="Refresh Appointments">
+                <i class="bi bi-arrow-clockwise" [class.spin-animation]="loadingAppointments"></i>
+                <span class="d-none d-sm-inline ms-1">Refresh</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-body p-4">
+          <!-- Filter Tabs & Quick Search -->
+          <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+            <ul class="nav nav-pills custom-nav-pills">
+              <li class="nav-item">
+                <button class="nav-link py-1 px-3" [class.active]="activeTab === 'upcoming'" (click)="setTab('upcoming')">
+                  Upcoming <span class="badge rounded-pill ms-1" [ngClass]="activeTab === 'upcoming' ? 'bg-white text-teal' : 'bg-secondary'">{{ upcomingAppointments.length }}</span>
+                </button>
+              </li>
+              <li class="nav-item">
+                <button class="nav-link py-1 px-3" [class.active]="activeTab === 'past'" (click)="setTab('past')">
+                  Past <span class="badge rounded-pill ms-1" [ngClass]="activeTab === 'past' ? 'bg-white text-teal' : 'bg-secondary'">{{ pastAppointments.length }}</span>
+                </button>
+              </li>
+              <li class="nav-item">
+                <button class="nav-link py-1 px-3" [class.active]="activeTab === 'all'" (click)="setTab('all')">
+                  All <span class="badge rounded-pill ms-1" [ngClass]="activeTab === 'all' ? 'bg-white text-teal' : 'bg-secondary'">{{ allAppointments.length }}</span>
+                </button>
+              </li>
+            </ul>
+
+            <div class="flex-grow-1" style="max-width: 320px;">
+              <div class="input-group input-group-sm">
+                <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
+                <input type="text" class="form-control border-start-0" placeholder="Filter appointments..."
+                       [(ngModel)]="appointmentSearch" (input)="filterAppointments()">
+              </div>
+            </div>
+          </div>
+
+          <!-- Loading Spinner for appointments -->
+          <app-loading-spinner *ngIf="loadingAppointments" message="Fetching appointments..."></app-loading-spinner>
+
+          <!-- Empty State -->
+          <div *ngIf="!loadingAppointments && displayedAppointments.length === 0" class="text-center py-5">
+            <div class="rounded-circle bg-light d-inline-flex align-items-center justify-content-center p-4 mb-3 text-secondary" style="width: 80px; height: 80px;">
+              <i class="bi bi-calendar-x fs-1"></i>
+            </div>
+            <h6 class="fw-bold text-dark mb-1">No {{ activeTab }} appointments found</h6>
+            <p class="text-muted small mb-3">There are no appointments registered in this view.</p>
+            <a [routerLink]="['/appointments/new']" [queryParams]="{ patientId: patientId }" class="btn btn-outline-teal btn-sm">
+              <i class="bi bi-plus-lg me-1"></i> Schedule New Appointment
+            </a>
+          </div>
+
+          <!-- Appointments List -->
+          <div *ngIf="!loadingAppointments && displayedAppointments.length > 0" class="d-flex flex-column gap-3">
+            <div *ngFor="let appt of displayedAppointments"
+                 class="appointment-card p-3 p-md-4 rounded border shadow-xs cursor-pointer"
+                 [class.border-teal-active]="selectedAppointment?.id === appt.id"
+                 (click)="openAppointmentModal(appt)">
+              <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                  <span class="badge bg-teal-subtle text-teal fw-bold">
+                    <i class="bi bi-calendar-event me-1"></i>
+                    {{ appt.appointmentStart | date:'mediumDate' }}
+                  </span>
+                  <span class="text-muted small">
+                    <i class="bi bi-clock me-1"></i>
+                    {{ appt.appointmentStart | date:'shortTime' }} - {{ appt.appointmentEnd | date:'shortTime' }}
+                  </span>
+                </div>
+
+                <div class="d-flex align-items-center gap-2">
+                  <!-- Source badge -->
+                  <span *ngIf="isBookedFromCall(appt)" class="badge bg-primary-subtle text-primary border border-primary-subtle" title="Booked via Retell AI Voice Call">
+                    <i class="bi bi-telephone-inbound-fill me-1"></i> AI Call Booking
+                  </span>
+                  <span *ngIf="!isBookedFromCall(appt)" class="badge bg-light text-muted border">
+                    <i class="bi bi-person me-1"></i> Manual
+                  </span>
+
+                  <!-- Status badge -->
+                  <span [ngClass]="(appt.status | statusBadge).cssClass">
+                    {{ (appt.status | statusBadge).text }}
+                  </span>
+                </div>
+              </div>
+
+              <div class="row g-2 align-items-center">
+                <div class="col-12 col-md-7">
+                  <div class="fw-bold text-dark fs-6">
+                    {{ appt.service?.name || 'General Dental Consultation' }}
+                  </div>
+                  <div class="text-muted small">
+                    <i class="bi bi-person-fill-gear me-1"></i>
+                    Dr. {{ appt.doctor?.firstName }} {{ appt.doctor?.lastName }}
+                    <span *ngIf="appt.doctor?.specialization" class="text-secondary">({{ appt.doctor?.specialization }})</span>
+                  </div>
+                </div>
+
+                <div class="col-12 col-md-5 text-md-end">
+                  <div class="small fw-semibold text-dark">
+                    <span *ngIf="appt.service?.durationMinutes" class="me-2 text-muted">
+                      <i class="bi bi-stopwatch me-1"></i>{{ appt.service.durationMinutes }}m
+                    </span>
+                    <span *ngIf="appt.service?.price" class="text-teal fw-bold">
+                      ${{ appt.service.price }}
+                    </span>
+                  </div>
+                  <button class="btn btn-link btn-sm text-teal p-0 mt-1 text-decoration-none fw-semibold">
+                    View Notes & Call Transcripts <i class="bi bi-chevron-right ms-1"></i>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Notes snippet if available -->
+              <div *ngIf="appt.reason || appt.reasonForAppointment" class="mt-2 pt-2 border-top text-muted small text-truncate">
+                <i class="bi bi-chat-left-text me-1 text-teal"></i>
+                <strong>Notes:</strong> {{ appt.reason || appt.reasonForAppointment }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+
+  <!-- Detailed Appointment & Call Transcript Modal -->
+  <div class="modal fade show d-block" *ngIf="selectedAppointment" tabindex="-1" style="background: rgba(0,0,0,0.5);">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+      <div class="modal-content border-0 shadow-lg">
+        <!-- Modal Header -->
+        <div class="modal-header bg-teal-gradient text-white py-3">
+          <div class="d-flex align-items-center gap-2">
+            <i class="bi bi-journal-medical fs-4"></i>
+            <div>
+              <h5 class="modal-title fw-bold mb-0">
+                {{ selectedAppointment.service?.name || 'Dental Appointment Details' }}
+              </h5>
+              <div class="small text-white-50">
+                Appointment #{{ selectedAppointment.id }} • {{ selectedAppointment.appointmentStart | date:'fullDate' }}
+              </div>
+            </div>
+          </div>
+          <button type="button" class="btn-close btn-close-white" (click)="closeAppointmentModal()"></button>
+        </div>
+
+        <!-- Modal Body -->
+        <div class="modal-body p-4">
+          <!-- Overview Section -->
+          <div class="row g-3 p-3 bg-light rounded border mb-4">
+            <div class="col-sm-4">
+              <label class="text-muted small fw-semibold">Attending Doctor</label>
+              <div class="fw-bold text-dark">
+                Dr. {{ selectedAppointment.doctor?.firstName }} {{ selectedAppointment.doctor?.lastName }}
+              </div>
+              <div class="small text-muted">{{ selectedAppointment.doctor?.specialization || 'General Dentist' }}</div>
+            </div>
+
+            <div class="col-sm-4">
+              <label class="text-muted small fw-semibold">Date & Time</label>
+              <div class="fw-bold text-dark">
+                {{ selectedAppointment.appointmentStart | date:'shortTime' }} - {{ selectedAppointment.appointmentEnd | date:'shortTime' }}
+              </div>
+              <div class="small text-muted">{{ selectedAppointment.appointmentStart | date:'mediumDate' }}</div>
+            </div>
+
+            <div class="col-sm-4">
+              <label class="text-muted small fw-semibold">Status & Channel</label>
+              <div class="d-flex align-items-center gap-2 mt-1">
+                <span [ngClass]="(selectedAppointment.status | statusBadge).cssClass">
+                  {{ (selectedAppointment.status | statusBadge).text }}
+                </span>
+                <span *ngIf="isBookedFromCall(selectedAppointment)" class="badge bg-primary-subtle text-primary border">
+                  <i class="bi bi-telephone-inbound-fill me-1"></i> AI Call
+                </span>
+                <span *ngIf="!isBookedFromCall(selectedAppointment)" class="badge bg-white text-muted border">
+                  Manual
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Appointment Notes Section -->
+          <div class="mb-4">
+            <h6 class="fw-bold text-dark d-flex align-items-center mb-2">
+              <i class="bi bi-sticky-fill text-warning me-2 fs-5"></i> Appointment Notes
+            </h6>
+            <div class="p-3 rounded border bg-amber-subtle">
+              <p class="mb-0 text-dark lh-base" *ngIf="selectedAppointment.reason || selectedAppointment.reasonForAppointment">
+                {{ selectedAppointment.reason || selectedAppointment.reasonForAppointment }}
+              </p>
+              <p class="mb-0 text-muted fst-italic small" *ngIf="!selectedAppointment.reason && !selectedAppointment.reasonForAppointment">
+                No specific notes were entered for this appointment.
+              </p>
+            </div>
+          </div>
+
+          <!-- Call Records & Transcripts Section (When Booked from Call) -->
+          <div *ngIf="isBookedFromCall(selectedAppointment)" class="mb-3">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+              <h6 class="fw-bold text-dark d-flex align-items-center mb-0">
+                <i class="bi bi-mic-fill text-teal me-2 fs-5"></i>
+                Call Recording & Transcripts
+              </h6>
+              <span *ngIf="selectedAppointment.callRecord" class="badge bg-light text-secondary border font-monospace">
+                Call ID: {{ selectedAppointment.callRecord.retellCallId || selectedAppointment.callRecord.id }}
+              </span>
+            </div>
+
+            <!-- Call Summary & Metadata -->
+            <div *ngIf="selectedAppointment.callRecord" class="card border mb-3">
+              <div class="card-body p-3">
+                <div class="row g-3 mb-2">
+                  <div class="col-sm-4">
+                    <span class="text-muted small">Caller Phone:</span>
+                    <div class="fw-bold text-dark">
+                      <i class="bi bi-telephone me-1 text-teal"></i>
+                      {{ selectedAppointment.callRecord.callerPhone || patient?.phoneNumber }}
+                    </div>
+                  </div>
+                  <div class="col-sm-4">
+                    <span class="text-muted small">Call Duration:</span>
+                    <div class="fw-bold text-dark">
+                      <i class="bi bi-stopwatch me-1 text-muted"></i>
+                      {{ selectedAppointment.callRecord.durationMs | duration }}
+                    </div>
+                  </div>
+                  <div class="col-sm-4">
+                    <span class="text-muted small">Sentiment:</span>
+                    <div>
+                      <span class="badge"
+                            [ngClass]="selectedAppointment.callRecord.sentiment === 'Positive' ? 'bg-success-subtle text-success' : (selectedAppointment.callRecord.sentiment === 'Negative' ? 'bg-danger-subtle text-danger' : 'bg-secondary-subtle text-muted')">
+                        {{ selectedAppointment.callRecord.sentiment || 'Neutral' }}
+                        <span *ngIf="selectedAppointment.callRecord.sentimentScore">
+                          ({{ (selectedAppointment.callRecord.sentimentScore * 100 | number:'1.0-0') }}%)
+                        </span>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Call Summary -->
+                <div *ngIf="selectedAppointment.callRecord.callSummary" class="mt-2 pt-2 border-top">
+                  <label class="small text-muted fw-semibold">AI Call Summary:</label>
+                  <div class="p-2 bg-light rounded text-dark small lh-sm">
+                    {{ selectedAppointment.callRecord.callSummary }}
+                  </div>
+                </div>
+
+                <!-- Audio Recording Player -->
+                <div *ngIf="selectedAppointment.callRecord.recordingUrl" class="mt-3">
+                  <label class="small text-muted fw-semibold">Call Audio Recording:</label>
+                  <audio controls class="w-100 mt-1">
+                    <source [src]="selectedAppointment.callRecord.recordingUrl" type="audio/mpeg">
+                    Your browser does not support audio element.
+                  </audio>
+                </div>
+              </div>
+            </div>
+
+            <!-- Full Call Transcript -->
+            <div class="card border">
+              <div class="card-header bg-light d-flex align-items-center justify-content-between py-2">
+                <span class="small fw-bold text-dark">
+                  <i class="bi bi-chat-dots me-1 text-teal"></i>
+                  Conversation Transcript
+                </span>
+                <button *ngIf="selectedAppointment.callRecord?.transcript" class="btn btn-outline-secondary btn-sm py-0 px-2"
+                        (click)="copyTranscript(selectedAppointment.callRecord?.transcript)">
+                  <i class="bi" [ngClass]="copiedTranscript ? 'bi-check2 text-success' : 'bi-clipboard'"></i>
+                  {{ copiedTranscript ? 'Copied' : 'Copy' }}
+                </button>
+              </div>
+
+              <div class="card-body p-3 transcript-container">
+                <!-- If transcript exists -->
+                <ng-container *ngIf="selectedAppointment.callRecord?.transcript">
+                  <div class="chat-bubbles-container">
+                    <div *ngFor="let line of parseTranscript(selectedAppointment.callRecord?.transcript)"
+                         class="chat-bubble-row mb-2"
+                         [ngClass]="line.isAgent ? 'agent-row' : 'user-row'">
+                      <div class="chat-bubble p-2 px-3 rounded shadow-xs"
+                           [ngClass]="line.isAgent ? 'bg-teal-subtle text-dark border-teal' : 'bg-light text-dark border'">
+                        <div class="extra-small fw-bold mb-1" [ngClass]="line.isAgent ? 'text-teal' : 'text-primary'">
+                          <i class="bi" [ngClass]="line.isAgent ? 'bi-robot me-1' : 'bi-person me-1'"></i>
+                          {{ line.speaker || (line.isAgent ? 'AI Assistant' : 'Caller') }}
+                        </div>
+                        <div class="small lh-base">{{ line.message }}</div>
+                      </div>
+                    </div>
+                  </div>
+                </ng-container>
+
+                <!-- Human Receptionist Transcript if available -->
+                <div *ngIf="selectedAppointment.callRecord?.humanCallTranscript" class="mt-3 pt-3 border-top">
+                  <h6 class="small fw-bold text-danger mb-2">
+                    <i class="bi bi-headset me-1"></i> Human Receptionist Handover Transcript
+                  </h6>
+                  <div class="p-3 bg-light rounded border text-dark small" style="white-space: pre-wrap;">
+                    {{ selectedAppointment.callRecord?.humanCallTranscript }}
+                  </div>
+                </div>
+
+                <!-- If no CallRecord was attached directly -->
+                <div *ngIf="!selectedAppointment.callRecord?.transcript" class="text-muted text-center py-4 small">
+                  <i class="bi bi-telephone-inbound fs-3 text-secondary d-block mb-2"></i>
+                  This appointment was registered from an inbound AI voice call session.
+                  <div class="text-secondary mt-1">Detailed audio transcript is archived in Retell call records.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Status Actions -->
+          <div class="d-flex flex-wrap align-items-center justify-content-between p-3 bg-light rounded border mt-4 gap-2">
+            <div>
+              <span class="small text-muted fw-semibold d-block">Manage Appointment Status:</span>
+              <span class="small text-muted">Update clinical progression for this booking</span>
+            </div>
+            <div class="btn-group btn-group-sm">
+              <button class="btn btn-outline-success"
+                      [disabled]="updatingAppointmentStatus || selectedAppointment.status === 'CONFIRMED'"
+                      (click)="updateSelectedAppointmentStatus('CONFIRMED')">
+                <i class="bi bi-check-lg me-1"></i> Confirm
+              </button>
+              <button class="btn btn-outline-primary"
+                      [disabled]="updatingAppointmentStatus || selectedAppointment.status === 'COMPLETED'"
+                      (click)="updateSelectedAppointmentStatus('COMPLETED')">
+                <i class="bi bi-check2-all me-1"></i> Complete
+              </button>
+              <button class="btn btn-outline-danger"
+                      [disabled]="updatingAppointmentStatus || selectedAppointment.status === 'CANCELLED'"
+                      (click)="updateSelectedAppointmentStatus('CANCELLED')">
+                <i class="bi bi-x-circle me-1"></i> Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="modal-footer bg-light py-2">
+          <button type="button" class="btn btn-secondary btn-sm" (click)="closeAppointmentModal()">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

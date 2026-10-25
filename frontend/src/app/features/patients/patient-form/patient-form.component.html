@@ -41,13 +41,23 @@
             </div>
           </div>
 
-          <div class="mb-4">
-            <label class="form-label fw-semibold small">Email Address</label>
+          <div class="mb-3">
+            <label class="form-label fw-semibold small">Email Address *</label>
             <div class="input-group">
               <span class="input-group-text bg-light"><i class="bi bi-envelope text-muted"></i></span>
               <input type="email" class="form-control" formControlName="email" placeholder="sarah.jenkins@example.com"
                      [class.is-invalid]="patientForm.get('email')?.touched && patientForm.get('email')?.invalid">
               <div class="invalid-feedback">Please enter a valid email address.</div>
+            </div>
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label fw-semibold small">Date of Birth *</label>
+            <div class="input-group">
+              <span class="input-group-text bg-light"><i class="bi bi-calendar text-muted"></i></span>
+              <input type="date" class="form-control" formControlName="dateOfBirth"
+                     [class.is-invalid]="patientForm.get('dateOfBirth')?.touched && patientForm.get('dateOfBirth')?.invalid">
+              <div class="invalid-feedback">Date of birth is required and must be in the past.</div>
             </div>
           </div>
 

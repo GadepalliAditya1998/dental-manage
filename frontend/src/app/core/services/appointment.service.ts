@@ -7,6 +7,7 @@ import {
   AppointmentRequest,
   AppointmentResponse,
   AppointmentStatus,
+  BookingSource,
   CalendarEventRequest
 } from '../models/appointment.model';
 import { TimeSlotResponse } from '../models/doctor.model';
@@ -24,12 +25,14 @@ export class AppointmentService {
     doctorId?: number;
     patientId?: number;
     status?: AppointmentStatus;
+    bookingSource?: BookingSource;
   }): Observable<ApiResponse<AppointmentResponse[]>> {
     let params = new HttpParams();
     if (filters?.date) params = params.set('date', filters.date);
     if (filters?.doctorId) params = params.set('doctorId', filters.doctorId.toString());
     if (filters?.patientId) params = params.set('patientId', filters.patientId.toString());
     if (filters?.status) params = params.set('status', filters.status);
+    if (filters?.bookingSource) params = params.set('bookingSource', filters.bookingSource);
 
     return this.http.get<ApiResponse<AppointmentResponse[]>>(this.baseUrl, { params });
   }

@@ -1,0 +1,125 @@
+databaseChangeLog:
+  # ── Add patient_id (String type) to patients and users tables ──────────────
+  - changeSet:
+      id: 007-add-patient-id-columns
+      author: system
+      changes:
+        - addColumn:
+            tableName: patients
+            columns:
+              - column:
+                  name: patient_id
+                  type: VARCHAR(64)
+        - addColumn:
+            tableName: users
+            columns:
+              - column:
+                  name: patient_id
+                  type: VARCHAR(64)
+
+  # ── Backfill existing patient records with scalable partition IDs ──────────
+  - changeSet:
+      id: 007-backfill-patient-id
+      author: system
+      changes:
+        - update:
+            tableName: patients
+            columns:
+              - column:
+                  name: patient_id
+                  valueComputed: "CONCAT('PAT-', COALESCE(clinic_id, 1), '-', id)"
+            where: "patient_id IS NULL"
+        - update:
+            tableName: users
+            columns:
+              - column:
+                  name: patient_id
+                  value: "PAT-1-DEFAULT01"
+            where: "username = 'patient'"
+        - update:
+            tableName: users
+            columns:
+              - column:
+                  name: patient_id
+                  valueComputed: "CONCAT('PAT-', COALESCE(clinic_id, 1), '-', id)"
+            where: "role = 'PATIENT' AND patient_id IS NULL"
+
+  # ── Create scalable and partition-friendly indexes on patients table ───────
+  - changeSet:
+      id: 007-create-patients-scalable-indexes
+      author: system
+      changes:
+        # Unique index on patient_id for fast global unique lookup
+        - createIndex:
+            tableName: patients
+            indexName: idx_patients_patient_id
+            unique: true
+            columns:
+              - column:
+                  name: patient_id
+        # Composite index for multi-tenant partition pruning (clinic_id + patient_id)
+        - createIndex:
+            tableName: patients
+            indexName: idx_patients_clinic_patient_id
+            columns:
+              - column:
+                  name: clinic_id
+              - column:
+                  name: patient_id
+        # Composite index for mobile + DOB lookup
+        - createIndex:
+            tableName: patients
+            indexName: idx_patients_phone_dob
+            columns:
+              - column:
+                  name: phone_number
+              - column:
+                  name: date_of_birth
+        # Composite index for multi-tenant partition pruning (clinic_id + phone + DOB)
+        - createIndex:
+            tableName: patients
+            indexName: idx_patients_clinic_phone_dob
+            columns:
+              - column:
+                  name: clinic_id
+              - column:
+                  name: phone_number
+              - column:
+                  name: date_of_birth
+
+  # ── Create scalable and partition-friendly indexes on users table ──────────
+  - changeSet:
+      id: 007-create-users-scalable-indexes
+      author: system
+      changes:
+        # Index on patient_id for users table
+        - createIndex:
+            tableName: users
+            indexName: idx_users_patient_id
+            columns:
+              - column:
+                  name: patient_id
+        # Composite index for multi-tenant role-based patient ID lookup
+        - createIndex:
+            tableName: users
+            indexName: idx_users_clinic_role_patient_id
+            columns:
+              - column:
+                  name: clinic_id
+              - column:
+                  name: role
+              - column:
+                  name: patient_id
+        # Composite index for multi-tenant role-based phone + DOB lookup
+        - createIndex:
+            tableName: users
+            indexName: idx_users_clinic_role_phone_dob
+            columns:
+              - column:
+                  name: clinic_id
+              - column:
+                  name: role
+              - column:
+                  name: phone_number
+              - column:
+                  name: date_of_birth

@@ -1,13 +1,17 @@
 package com.dental.manage.service.impl;
 
+import com.dental.manage.context.ClinicRequestContext;
 import com.dental.manage.dto.request.ClinicSettingsRequest;
+import com.dental.manage.dto.response.ApiKeyResponse;
 import com.dental.manage.dto.response.ClinicSettingsResponse;
 import com.dental.manage.dto.response.ClinicWorkingHoursResponse;
 import com.dental.manage.entity.ClinicDetails;
 import com.dental.manage.exception.ResourceNotFoundException;
 import com.dental.manage.mapper.ClinicDetailsMapper;
 import com.dental.manage.repository.ClinicDetailsRepository;
+import com.dental.manage.service.ApiKeyService;
 import com.dental.manage.service.ClinicDetailsService;
+import com.dental.manage.util.ApiKeyGenerator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -41,11 +45,12 @@ public class ClinicDetailsServiceImpl implements ClinicDetailsService {
 
     private final ClinicDetailsRepository clinicDetailsRepository;
     private final ClinicDetailsMapper clinicDetailsMapper;
+    private final ApiKeyService apiKeyService;
 
     @Override
     public ClinicWorkingHoursResponse getClinicDetailsWithWorkingHours(String period, LocalDateTime dateTime, String dayOfWeek) {
         log.info("Fetching clinic details with working hours (period={}, dateTime={}, dayOfWeek={})", period, dateTime, dayOfWeek);
-        ClinicDetails clinic = getSingletonClinicDetails();
+        ClinicDetails clinic = resolveCurrentClinicDetails(null);
         ClinicWorkingHoursResponse response = clinicDetailsMapper.toWorkingHoursResponse(clinic);
 
         ZoneId zoneId = resolveZoneId(clinic);
@@ -86,7 +91,7 @@ public class ClinicDetailsServiceImpl implements ClinicDetailsService {
     @Override
     public ClinicSettingsResponse getClinicSettings() {
         log.info("Fetching clinic configuration settings");
-        ClinicDetails clinic = getSingletonClinicDetails();
+        ClinicDetails clinic = resolveCurrentClinicDetails(null);
         return clinicDetailsMapper.toSettingsResponse(clinic);
     }
 
@@ -94,8 +99,15 @@ public class ClinicDetailsServiceImpl implements ClinicDetailsService {
     @Transactional
     public ClinicSettingsResponse updateClinicDetails(ClinicSettingsRequest request) {
         log.info("Updating clinic details configuration: {}", request.getClinicName());
-        ClinicDetails clinic = getSingletonClinicDetails();
+        ClinicDetails clinic = resolveCurrentClinicDetails(request.getClinicId());
+        String existingKey = clinic.getApiKey();
         clinicDetailsMapper.updateEntityFromRequest(request, clinic);
+        // Preserve existing API key if not explicitly changed in request
+        if ((clinic.getApiKey() == null || clinic.getApiKey().isBlank()) && existingKey != null) {
+            clinic.setApiKey(existingKey);
+        } else if (clinic.getApiKey() == null || clinic.getApiKey().isBlank()) {
+            clinic.setApiKey(ApiKeyGenerator.generateApiKey());
+        }
         ClinicDetails saved = clinicDetailsRepository.save(clinic);
         log.info("Clinic details updated successfully (id={})", saved.getId());
         return clinicDetailsMapper.toSettingsResponse(saved);
@@ -103,6 +115,33 @@ public class ClinicDetailsServiceImpl implements ClinicDetailsService {
 
     @Override
     public ClinicDetails getClinicDetailsEntity() {
+        return resolveCurrentClinicDetails(null);
+    }
+
+    @Override
+    @Transactional
+    public ApiKeyResponse regenerateApiKey(Long clinicId) {
+        log.info("Request to regenerate Retell API key for clinicId={}", clinicId);
+        return apiKeyService.createOrRegenerateRetellApiKey(clinicId, null);
+    }
+
+    @Override
+    @Transactional
+    public ApiKeyResponse getApiKey(Long clinicId) {
+        log.info("Request to get active Retell API key for clinicId={}", clinicId);
+        return apiKeyService.getActiveRetellApiKey(clinicId);
+    }
+
+    private ClinicDetails resolveCurrentClinicDetails(Long clinicId) {
+        if (clinicId != null) {
+            return clinicDetailsRepository.findByClinicIdAndIsDeletedFalse(clinicId)
+                    .orElseGet(this::getSingletonClinicDetails);
+        }
+        Long contextClinicId = ClinicRequestContext.getClinicId();
+        if (contextClinicId != null) {
+            return clinicDetailsRepository.findByClinicIdAndIsDeletedFalse(contextClinicId)
+                    .orElseGet(this::getSingletonClinicDetails);
+        }
         return getSingletonClinicDetails();
     }
 

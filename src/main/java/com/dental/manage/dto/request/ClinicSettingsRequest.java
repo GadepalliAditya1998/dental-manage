@@ -22,4 +22,5 @@ public class ClinicSettingsRequest {
     private String workingDays;
     private String retellAgentId;
     private String timezone;
+    private String apiKey;
 }

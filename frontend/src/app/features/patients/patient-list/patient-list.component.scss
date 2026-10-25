@@ -1,3 +1,25 @@
 .table td, .table th {
   padding: 0.85rem 0.75rem;
 }
+
+.patient-name-link {
+  transition: color 0.15s ease-in-out;
+  cursor: pointer;
+
+  &:hover {
+    color: var(--primary-teal) !important;
+    .hover-underline {
+      text-decoration: underline;
+    }
+  }
+}
+
+.btn-outline-teal {
+  color: var(--primary-teal);
+  border-color: var(--primary-teal);
+
+  &:hover {
+    background-color: var(--primary-teal);
+    color: #ffffff;
+  }
+}

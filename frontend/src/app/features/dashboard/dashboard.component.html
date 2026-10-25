@@ -1,6 +1,6 @@
 <div class="container-fluid py-2">
   <!-- Top Header with Role-Specific Greetings -->
-  <div class="d-flex flex-wrap align-items-center justify-content-between mb-4">
+  <div class="d-flex flex-wrap align-items-center justify-content-between mb-3">
     <div>
       <div class="d-flex align-items-center gap-2 mb-1">
         <h2 class="fw-bold mb-0 text-dark">
@@ -11,7 +11,7 @@
         </span>
       </div>
       <p class="text-muted mb-0">
-        {{ isDoctor ? 'Here is your clinical appointment schedule and patient consultations for today.' : 'Real-time clinic performance, Retell AI calls, and appointment tracking.' }}
+        {{ isDoctor ? 'Here is your clinical performance, Call Agent statistics, and patient schedule.' : 'Real-time clinic performance, Retell AI calls, and appointment tracking.' }}
       </p>
     </div>
     <div class="d-flex gap-2 mt-2 mt-sm-0">
@@ -24,16 +24,90 @@
     </div>
   </div>
 
+  <!-- Time Filter Toolbar (Day, Week, Month, Custom) -->
+  <div class="filter-toolbar mb-4">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+      <!-- Filter Selector Buttons -->
+      <div class="d-flex align-items-center gap-2">
+        <span class="text-muted small fw-semibold me-1">
+          <i class="bi bi-funnel me-1"></i> Filter:
+        </span>
+        <div class="btn-group" role="group" aria-label="Metric Time Filter">
+          <button
+            type="button"
+            class="btn-filter"
+            [class.active]="selectedFilter === 'DAY'"
+            (click)="setFilter('DAY')">
+            Day
+          </button>
+          <button
+            type="button"
+            class="btn-filter"
+            [class.active]="selectedFilter === 'WEEK'"
+            (click)="setFilter('WEEK')">
+            Week
+          </button>
+          <button
+            type="button"
+            class="btn-filter"
+            [class.active]="selectedFilter === 'MONTH'"
+            (click)="setFilter('MONTH')">
+            Month
+          </button>
+          <button
+            type="button"
+            class="btn-filter"
+            [class.active]="selectedFilter === 'CUSTOM'"
+            (click)="setFilter('CUSTOM')">
+            Custom
+          </button>
+        </div>
+      </div>
+
+      <!-- Custom Date Range Picker (shown when Custom is active) -->
+      <div *ngIf="selectedFilter === 'CUSTOM'" class="d-flex flex-wrap align-items-center gap-2 custom-date-box">
+        <label class="small text-muted mb-0">From:</label>
+        <input
+          type="date"
+          class="form-control form-control-sm"
+          style="width: 145px;"
+          [(ngModel)]="customStartDate"
+          [max]="customEndDate || todayDate">
+        <label class="small text-muted mb-0">To:</label>
+        <input
+          type="date"
+          class="form-control form-control-sm"
+          style="width: 145px;"
+          [(ngModel)]="customEndDate"
+          [min]="customStartDate"
+          [max]="todayDate">
+        <button
+          class="btn btn-sm btn-teal"
+          (click)="applyCustomFilter()"
+          [disabled]="!customStartDate || !customEndDate">
+          Apply
+        </button>
+      </div>
+
+      <!-- Active Filter Badge & Loading indicator -->
+      <div class="d-flex align-items-center gap-2 ms-auto ms-sm-0">
+        <div *ngIf="metricsLoading" class="spinner-border spinner-border-sm text-teal" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+        <span class="badge bg-light text-secondary border px-3 py-2 fw-normal">
+          <i class="bi bi-calendar3 me-1 text-teal"></i> {{ dateRangeLabel }}
+        </span>
+      </div>
+    </div>
+  </div>
+
   <!-- Pending Backend Alert (if API error occurs) -->
   <div *ngIf="errorMessage" class="alert alert-info alert-dismissible fade show border-0 shadow-sm" role="alert">
     <div class="d-flex align-items-center">
       <i class="bi bi-info-circle-fill fs-4 me-3 text-primary"></i>
       <div>
-        <h6 class="fw-bold mb-1">Backend REST API Integration Ready</h6>
-        <p class="mb-0 small">
-          Frontend is listening to <code>http://localhost:8080/api/dashboard/metrics</code> and WebSocket <code>/ws</code>.
-          Once backend controllers are online, real-time statistics will display here automatically.
-        </p>
+        <h6 class="fw-bold mb-1">Backend Connection Notice</h6>
+        <p class="mb-0 small">{{ errorMessage }}</p>
       </div>
     </div>
   </div>
@@ -45,20 +119,30 @@
     <div class="row g-3 mb-4" *ngIf="isDoctor">
       <div class="col-12 col-sm-6 col-xl-3">
         <app-stat-card
-          title="Today's Appointments"
-          [value]="recentAppointments.length"
-          subtitle="Consultations today"
-          icon="bi-calendar-check"
+          title="Calls Received"
+          [value]="metrics?.callsReceived ?? 0"
+          subtitle="Consultation calls received"
+          icon="bi-telephone-inbound"
           iconColor="#0d9488"
           iconBgColor="#ccfbf1">
         </app-stat-card>
       </div>
       <div class="col-12 col-sm-6 col-xl-3">
         <app-stat-card
-          title="Confirmed"
+          title="Booked via Call Agent"
+          [value]="metrics?.appointmentsBookedViaCallAgent ?? 0"
+          subtitle="AI Agent appointments booked"
+          icon="bi-robot"
+          iconColor="#0284c7"
+          iconBgColor="#e0f2fe">
+        </app-stat-card>
+      </div>
+      <div class="col-12 col-sm-6 col-xl-3">
+        <app-stat-card
+          title="Confirmed Bookings"
           [value]="metrics?.successfulBookings ?? 0"
-          subtitle="Patients confirmed"
-          icon="bi-check2-circle"
+          subtitle="Scheduled & confirmed"
+          icon="bi-calendar-check"
           iconColor="#16a34a"
           iconBgColor="#dcfce7">
         </app-stat-card>
@@ -67,20 +151,10 @@
         <app-stat-card
           title="New Patients"
           [value]="metrics?.newLeadBookings ?? 0"
-          subtitle="First-time visits"
+          subtitle="First-time consultations"
           icon="bi-person-plus-fill"
-          iconColor="#2563eb"
-          iconBgColor="#dbeafe">
-        </app-stat-card>
-      </div>
-      <div class="col-12 col-sm-6 col-xl-3">
-        <app-stat-card
-          title="Cancellations"
-          [value]="metrics?.cancelledAppointments ?? 0"
-          subtitle="Cancelled / Rescheduled"
-          icon="bi-calendar-x"
-          iconColor="#dc2626"
-          iconBgColor="#fee2e2">
+          iconColor="#4f46e5"
+          iconBgColor="#e0e7ff">
         </app-stat-card>
       </div>
     </div>
@@ -89,29 +163,29 @@
     <div class="row g-3 mb-4" *ngIf="!isDoctor">
       <div class="col-12 col-sm-6 col-xl-3">
         <app-stat-card
-          title="Total AI Calls"
-          [value]="metrics?.totalAiCalls ?? 0"
-          subtitle="Inbound AI conversations"
-          icon="bi-robot"
+          title="Calls Received"
+          [value]="metrics?.callsReceived ?? 0"
+          subtitle="Inbound calls handled"
+          icon="bi-telephone-inbound"
           iconColor="#0d9488"
           iconBgColor="#ccfbf1">
         </app-stat-card>
       </div>
       <div class="col-12 col-sm-6 col-xl-3">
         <app-stat-card
-          title="Successful Bookings"
-          [value]="metrics?.successfulBookings ?? 0"
-          subtitle="AI & Reception bookings"
-          icon="bi-calendar-check"
-          iconColor="#16a34a"
-          iconBgColor="#dcfce7">
+          title="Booked via Call Agent"
+          [value]="metrics?.appointmentsBookedViaCallAgent ?? 0"
+          subtitle="AI Agent bookings"
+          icon="bi-robot"
+          iconColor="#0284c7"
+          iconBgColor="#e0f2fe">
         </app-stat-card>
       </div>
       <div class="col-12 col-sm-6 col-xl-3">
         <app-stat-card
           title="Human Transfers"
           [value]="metrics?.totalHumanTransfers ?? 0"
-          subtitle="Forwarded to receptionist"
+          subtitle="Forwarded to front desk"
           icon="bi-headset"
           iconColor="#ea580c"
           iconBgColor="#ffedd5">
@@ -119,12 +193,12 @@
       </div>
       <div class="col-12 col-sm-6 col-xl-3">
         <app-stat-card
-          title="New Lead Bookings"
-          [value]="metrics?.newLeadBookings ?? 0"
-          subtitle="First-time patients"
-          icon="bi-person-plus-fill"
-          iconColor="#2563eb"
-          iconBgColor="#dbeafe">
+          title="Total Bookings"
+          [value]="metrics?.successfulBookings ?? 0"
+          subtitle="AI & Reception bookings"
+          icon="bi-calendar-check"
+          iconColor="#16a34a"
+          iconBgColor="#dcfce7">
         </app-stat-card>
       </div>
     </div>
@@ -152,6 +226,7 @@
                     <th *ngIf="!isDoctor">Doctor</th>
                     <th>Treatment / Service</th>
                     <th>Time Slot</th>
+                    <th>Source</th>
                     <th>Status</th>
                   </tr>
                 </thead>
@@ -167,13 +242,19 @@
                     </td>
                     <td class="small text-muted">{{ appt.appointmentStart | date:'shortTime' }} - {{ appt.appointmentEnd | date:'shortTime' }}</td>
                     <td>
+                      <span class="badge" [ngClass]="appt.bookingSource === 'AI_AGENT' ? 'bg-info-subtle text-info border border-info' : 'bg-light text-muted border'">
+                        <i class="bi" [ngClass]="appt.bookingSource === 'AI_AGENT' ? 'bi-robot me-1' : 'bi-person me-1'"></i>
+                        {{ appt.bookingSource === 'AI_AGENT' ? 'Call Agent' : 'Manual' }}
+                      </span>
+                    </td>
+                    <td>
                       <span [ngClass]="(appt.status | statusBadge).cssClass">
                         {{ (appt.status | statusBadge).text }}
                       </span>
                     </td>
                   </tr>
                   <tr *ngIf="recentAppointments.length === 0">
-                    <td [attr.colspan]="isDoctor ? 4 : 5" class="text-center py-4 text-muted">
+                    <td [attr.colspan]="isDoctor ? 5 : 6" class="text-center py-4 text-muted">
                       No appointments scheduled for today.
                     </td>
                   </tr>
@@ -189,7 +270,7 @@
         <div class="card card-custom border-0 h-100">
           <div class="card-header bg-white border-0 py-3 d-flex align-items-center justify-content-between">
             <h5 class="fw-bold mb-0 text-dark">
-              <i class="bi bi-telephone me-2 text-primary"></i> Inbound AI Call Logs
+              <i class="bi bi-telephone me-2 text-primary"></i> Inbound Call Logs
             </h5>
             <a routerLink="/calls" class="btn btn-sm btn-link text-decoration-none text-teal fw-semibold">
               View All <i class="bi bi-arrow-right"></i>

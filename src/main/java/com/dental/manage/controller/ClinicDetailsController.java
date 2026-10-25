@@ -1,6 +1,7 @@
 package com.dental.manage.controller;
 
 import com.dental.manage.dto.request.ClinicSettingsRequest;
+import com.dental.manage.dto.response.ApiKeyResponse;
 import com.dental.manage.dto.response.ApiResponse;
 import com.dental.manage.dto.response.ClinicSettingsResponse;
 import com.dental.manage.dto.response.ClinicWorkingHoursResponse;
@@ -11,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -24,7 +26,7 @@ import java.time.LocalDateTime;
  * Supports querying working hours for a day or for a week based on request parameters.
  */
 @RestController
-@RequestMapping({"/api/clinic", "/api/clinic/details"})
+@RequestMapping("/api")
 @RequiredArgsConstructor
 @Slf4j
 public class ClinicDetailsController {
@@ -41,7 +43,7 @@ public class ClinicDetailsController {
      * @param dayOfWeek optional day of week name (e.g., "MONDAY")
      * @return ApiResponse containing ClinicWorkingHoursResponse with day-wise records
      */
-    @GetMapping
+    @GetMapping({"/clinic", "/clinic/details"})
     public ResponseEntity<ApiResponse<ClinicWorkingHoursResponse>> getClinicDetails(
             @RequestParam(name = "period", required = false) String period,
             @RequestParam(name = "view", required = false) String view,
@@ -68,7 +70,7 @@ public class ClinicDetailsController {
      * @param from alias for dateTime
      * @return ApiResponse containing ClinicWorkingHoursResponse with 1 day record
      */
-    @GetMapping("/day")
+    @GetMapping({"/clinic/day", "/clinic/details/day"})
     public ResponseEntity<ApiResponse<ClinicWorkingHoursResponse>> getClinicDetailsForDay(
             @RequestParam(name = "dateTime", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime dateTime,
             @RequestParam(name = "from", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from) {
@@ -85,7 +87,7 @@ public class ClinicDetailsController {
      * @param from alias for dateTime
      * @return ApiResponse containing ClinicWorkingHoursResponse with 7 day-wise records
      */
-    @GetMapping("/week")
+    @GetMapping({"/clinic/week", "/clinic/details/week"})
     public ResponseEntity<ApiResponse<ClinicWorkingHoursResponse>> getClinicDetailsForWeek(
             @RequestParam(name = "dateTime", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime dateTime,
             @RequestParam(name = "from", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from) {
@@ -100,7 +102,7 @@ public class ClinicDetailsController {
      *
      * @return ApiResponse containing ClinicSettingsResponse
      */
-    @GetMapping("/settings")
+    @GetMapping({"/clinic/settings", "/settings"})
     public ResponseEntity<ApiResponse<ClinicSettingsResponse>> getClinicSettings() {
         log.info("Request received to fetch clinic configuration settings");
         ClinicSettingsResponse response = clinicDetailsService.getClinicSettings();
@@ -113,11 +115,39 @@ public class ClinicDetailsController {
      * @param request Update payload
      * @return ApiResponse containing updated ClinicSettingsResponse
      */
-    @PutMapping
+    @PutMapping({"/clinic", "/clinic/settings", "/settings"})
     public ResponseEntity<ApiResponse<ClinicSettingsResponse>> updateClinicDetails(
             @Valid @RequestBody ClinicSettingsRequest request) {
         log.info("Request received to update clinic configuration");
         ClinicSettingsResponse response = clinicDetailsService.updateClinicDetails(request);
         return ResponseEntity.ok(ApiResponse.success("Clinic details updated successfully", response));
+    }
+
+    /**
+     * Regenerates a new API key for the clinic for Retell AI agent integration.
+     *
+     * @param clinicId optional clinicId query param
+     * @return ApiResponse containing ApiKeyResponse with newly generated key
+     */
+    @PostMapping({"/clinic/api-key/regenerate", "/settings/api-key/regenerate"})
+    public ResponseEntity<ApiResponse<ApiKeyResponse>> regenerateApiKey(
+            @RequestParam(name = "clinicId", required = false) Long clinicId) {
+        log.info("Request received to regenerate clinic API key (clinicId={})", clinicId);
+        ApiKeyResponse response = clinicDetailsService.regenerateApiKey(clinicId);
+        return ResponseEntity.ok(ApiResponse.success("API key regenerated successfully", response));
+    }
+
+    /**
+     * Retrieves the current API key for the clinic.
+     *
+     * @param clinicId optional clinicId query param
+     * @return ApiResponse containing ApiKeyResponse with current key
+     */
+    @GetMapping({"/clinic/api-key", "/settings/api-key"})
+    public ResponseEntity<ApiResponse<ApiKeyResponse>> getApiKey(
+            @RequestParam(name = "clinicId", required = false) Long clinicId) {
+        log.info("Request received to fetch clinic API key (clinicId={})", clinicId);
+        ApiKeyResponse response = clinicDetailsService.getApiKey(clinicId);
+        return ResponseEntity.ok(ApiResponse.success("Clinic API key retrieved successfully", response));
     }
 }

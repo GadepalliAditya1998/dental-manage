@@ -1,0 +1,38 @@
+databaseChangeLog:
+  # ── Add api_key column to clinic_details table ──────────────────────────────
+  - changeSet:
+      id: 010-add-api-key-to-clinic-details
+      author: system
+      changes:
+        - addColumn:
+            tableName: clinic_details
+            columns:
+              - column:
+                  name: api_key
+                  type: VARCHAR(128)
+
+  # ── Backfill default API key for existing clinics ───────────────────────────
+  - changeSet:
+      id: 010-backfill-clinic-api-key
+      author: system
+      changes:
+        - update:
+            tableName: clinic_details
+            columns:
+              - column:
+                  name: api_key
+                  value: "clk_live_default_smile_dental_key_2026"
+            where: "api_key IS NULL"
+
+  # ── Index for fast lookup on api_key ────────────────────────────────────────
+  - changeSet:
+      id: 010-create-api-key-index
+      author: system
+      changes:
+        - createIndex:
+            tableName: clinic_details
+            indexName: idx_clinic_details_api_key
+            unique: false
+            columns:
+              - column:
+                  name: api_key

@@ -9,3 +9,17 @@ databaseChangeLog:
       file: db/changelog/changes/004-remove-doctor-patient-id-from-users.yaml
   - include:
       file: db/changelog/changes/005-add-date-of-birth.yaml
+  - include:
+      file: db/changelog/changes/006-add-reason-to-appointments.yaml
+  - include:
+      file: db/changelog/changes/007-add-patient-id-and-scalable-partition-indexes.yaml
+  - include:
+      file: db/changelog/changes/008-add-booking-source-to-appointments.yaml
+  - include:
+      file: db/changelog/changes/009-add-whatsapp-opt-out-to-patients.yaml
+  - include:
+      file: db/changelog/changes/010-add-api-key-to-clinic-details.yaml
+  - include:
+      file: db/changelog/changes/011-create-api-keys-table.yaml
+  - include:
+      file: db/changelog/changes/012-sync-doctors-from-users.yaml

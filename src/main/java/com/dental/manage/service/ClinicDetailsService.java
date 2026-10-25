@@ -59,4 +59,20 @@ public interface ClinicDetailsService {
      * @return ClinicDetails entity
      */
     ClinicDetails getClinicDetailsEntity();
+
+    /**
+     * Regenerates a new cryptographically secure API key for the clinic.
+     *
+     * @param clinicId optional clinicId (defaults to current clinic in context or default clinic)
+     * @return ApiKeyResponse with newly generated key
+     */
+    com.dental.manage.dto.response.ApiKeyResponse regenerateApiKey(Long clinicId);
+
+    /**
+     * Retrieves the current API key for the clinic.
+     *
+     * @param clinicId optional clinicId
+     * @return ApiKeyResponse
+     */
+    com.dental.manage.dto.response.ApiKeyResponse getApiKey(Long clinicId);
 }

@@ -9,13 +9,16 @@ import com.dental.manage.dto.response.PatientLookupResponse;
 public interface PatientLookupService {
 
     /**
-     * Looks up an existing patient using phone number, full name, and date of birth.
-     * All three parameters are mandatory.
+     * Looks up an existing patient using:
+     * 1) A unique string identifier (patientId)
+     * OR
+     * 2) Patient's mobile number and date of birth.
+     *
      * Restricted to PATIENT role only (excludes DOCTOR and RECEPTIONIST).
      *
-     * @param request PatientLookupRequest containing mandatory search parameters
+     * @param request PatientLookupRequest containing patientId or (phoneNumber + dateOfBirth)
      * @return PatientLookupResponse containing patient details
-     * @throws IllegalArgumentException if mandatory fields are missing or invalid
+     * @throws IllegalArgumentException if required fields are missing or invalid
      * @throws com.dental.manage.exception.ResourceNotFoundException if no matching patient is found
      */
     PatientLookupResponse lookupPatient(PatientLookupRequest request);

@@ -1,6 +1,7 @@
 package com.dental.manage.entity;
 
 import com.dental.manage.enums.AppointmentStatus;
+import com.dental.manage.enums.BookingSource;
 import com.dental.manage.enums.ConfirmationStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -55,6 +56,9 @@ public class Appointment extends BaseEntity {
     @Column(name = "appointment_end", nullable = false)
     private LocalDateTime appointmentEnd;
 
+    @Column(name = "reason", columnDefinition = "TEXT")
+    private String reason;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)
     @Builder.Default
@@ -74,4 +78,9 @@ public class Appointment extends BaseEntity {
 
     @Column(name = "reminder_sent_at")
     private LocalDateTime reminderSentAt;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "booking_source", length = 30)
+    @Builder.Default
+    private BookingSource bookingSource = BookingSource.MANUAL;
 }

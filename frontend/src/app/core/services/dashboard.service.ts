@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { ApiResponse } from '../models/api-response.model';
@@ -13,14 +13,31 @@ export class DashboardService {
 
   constructor(private http: HttpClient) {}
 
-  getMetrics(): Observable<ApiResponse<DashboardMetricsResponse>> {
-    return this.http.get<ApiResponse<DashboardMetricsResponse>>(`${this.baseUrl}/metrics`);
+  getMetrics(
+    filter?: string,
+    startDate?: string,
+    endDate?: string,
+    doctorId?: number
+  ): Observable<ApiResponse<DashboardMetricsResponse>> {
+    let params = new HttpParams();
+    if (filter) params = params.set('filter', filter);
+    if (startDate) params = params.set('startDate', startDate);
+    if (endDate) params = params.set('endDate', endDate);
+    if (doctorId !== undefined && doctorId !== null) params = params.set('doctorId', doctorId.toString());
+
+    return this.http.get<ApiResponse<DashboardMetricsResponse>>(`${this.baseUrl}/metrics`, { params });
   }
 
-  getDailyMetrics(startDate?: string, endDate?: string): Observable<ApiResponse<DashboardMetricsResponse>> {
-    const params: { [key: string]: string } = {};
-    if (startDate) params['startDate'] = startDate;
-    if (endDate) params['endDate'] = endDate;
+  getDailyMetrics(
+    startDate?: string,
+    endDate?: string,
+    doctorId?: number
+  ): Observable<ApiResponse<DashboardMetricsResponse>> {
+    let params = new HttpParams();
+    if (startDate) params = params.set('startDate', startDate);
+    if (endDate) params = params.set('endDate', endDate);
+    if (doctorId !== undefined && doctorId !== null) params = params.set('doctorId', doctorId.toString());
+
     return this.http.get<ApiResponse<DashboardMetricsResponse>>(`${this.baseUrl}/daily`, { params });
   }
 }

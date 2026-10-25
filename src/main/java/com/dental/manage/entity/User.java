@@ -29,6 +29,9 @@ public class User extends BaseEntity {
     @Column(name = "clinic_id")
     private Long clinicId;
 
+    @Column(name = "patient_id", length = 64)
+    private String patientId;
+
     @Column(name = "username", nullable = false, unique = true, length = 100)
     private String username;
 

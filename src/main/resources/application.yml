@@ -14,12 +14,17 @@ spring:
     show-sql: false
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
     open-in-view: false
 
   liquibase:
     change-log: classpath:db/changelog/db.changelog-master.yaml
+
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 25MB
+      max-request-size: 50MB
 
 # Retell AI Configuration
 retell:
@@ -38,13 +43,42 @@ twilio:
 clinic:
   name: "Smile Dental Clinic"
   timezone: "Asia/Kolkata"
+  phone: "+1-800-555-0199"
+  country-code: "+1"
   reminder:
-    cron: "0 0 9 * * ?"
+    enabled: ${CLINIC_REMINDER_ENABLED:true}
+    cron: ${CLINIC_REMINDER_CRON:0 0 9 * * ?}
     days-before: 1
 
 # Calendar Provider (none | google)
 calendar:
-  provider: none
+  provider: ${CALENDAR_PROVIDER:google}
+  google:
+    enabled: ${GOOGLE_CALENDAR_ENABLED:true}
+    calendar-id: ${GOOGLE_CALENDAR_ID:primary}
+    application-name: ${GOOGLE_APPLICATION_NAME:DentalClinicManagement}
+    credentials-path: ${GOOGLE_CREDENTIALS_PATH:}
+    credentials-json: ${GOOGLE_CREDENTIALS_JSON:}
+    client-id: ${GOOGLE_CLIENT_ID:}
+    client-secret: ${GOOGLE_CLIENT_SECRET:}
+    refresh-token: ${GOOGLE_REFRESH_TOKEN:}
+    send-updates: ${GOOGLE_CALENDAR_SEND_UPDATES:all}
+    default-timezone: ${CLINIC_TIMEZONE:Asia/Kolkata}
+
+# Storage Configuration (local | s3)
+storage:
+  provider: ${STORAGE_PROVIDER:local}
+  local:
+    base-path: ${STORAGE_LOCAL_BASE_PATH:./uploads}
+    base-url: ${STORAGE_LOCAL_BASE_URL:http://localhost:8080/api/storage/files}
+  s3:
+    bucket: ${AWS_S3_BUCKET:dental-clinic-storage}
+    region: ${AWS_REGION:us-east-1}
+    access-key: ${AWS_ACCESS_KEY_ID:}
+    secret-key: ${AWS_SECRET_ACCESS_KEY:}
+    endpoint: ${AWS_S3_ENDPOINT:}
+    path-style-access: ${AWS_S3_PATH_STYLE_ACCESS:false}
+    presigned-url-expiration-minutes: 15
 
 server:
   port: 8080

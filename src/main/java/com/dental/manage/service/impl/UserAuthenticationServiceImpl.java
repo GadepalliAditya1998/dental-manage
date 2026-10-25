@@ -76,10 +76,16 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
             extraClaims.put("clinicId", user.getClinicId());
         }
 
+        Long doctorId = null;
+        if (user.getRole() == UserRole.DOCTOR) {
+            doctorId = user.getId();
+            extraClaims.put("doctorId", doctorId);
+        }
+
         String token = jwtTokenService.createToken(user.getUsername(), user.getRole().name(), extraClaims);
         long expiresInSeconds = jwtTokenService.getValidityInMilliseconds() / 1000L;
 
-        log.info("Authentication successful for user '{}' with role '{}'", user.getUsername(), user.getRole());
+        log.info("Authentication successful for user '{}' with role '{}' (doctorId={})", user.getUsername(), user.getRole(), doctorId);
 
         return LoginResponse.builder()
                 .token(token)
@@ -90,6 +96,7 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
                 .role(user.getRole().name())
                 .fullName(user.getFullName())
                 .clinicId(user.getClinicId())
+                .doctorId(doctorId)
                 .build();
     }
 
@@ -104,39 +111,5 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
             log.warn("Invalid Base64 formatting for {}", fieldName);
             throw new InvalidCredentialsException("Invalid credentials format: " + fieldName + " must be base64-encoded");
         }
-    }
-
-    private User findDefaultUser(String username) {
-        if ("receptionist".equalsIgnoreCase(username)) {
-            return User.builder()
-                    .clinicId(1L)
-                    .username("receptionist")
-                    .password("reception123")
-                    .role(UserRole.RECEPTIONIST)
-                    .fullName("Clinic Receptionist")
-                    .isActive(true)
-                    .build();
-        }
-        if ("doctor".equalsIgnoreCase(username)) {
-            return User.builder()
-                    .clinicId(1L)
-                    .username("doctor")
-                    .password("doctor123")
-                    .role(UserRole.DOCTOR)
-                    .fullName("Dr. Jane Smith")
-                    .isActive(true)
-                    .build();
-        }
-        if ("patient".equalsIgnoreCase(username)) {
-            return User.builder()
-                    .clinicId(1L)
-                    .username("patient")
-                    .password("patient123")
-                    .role(UserRole.PATIENT)
-                    .fullName("John Doe")
-                    .isActive(true)
-                    .build();
-        }
-        return null;
     }
 }

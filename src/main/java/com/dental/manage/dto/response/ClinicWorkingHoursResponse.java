@@ -28,6 +28,7 @@ public class ClinicWorkingHoursResponse {
     private String workingDays;
     private String retellAgentId;
     private String timezone;
+    private String apiKey;
 
     /**
      * Query period representation: "DAY" or "WEEK".

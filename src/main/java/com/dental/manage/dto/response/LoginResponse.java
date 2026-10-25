@@ -22,4 +22,5 @@ public class LoginResponse {
     private String role;
     private String fullName;
     private Long clinicId;
+    private Long doctorId;
 }
